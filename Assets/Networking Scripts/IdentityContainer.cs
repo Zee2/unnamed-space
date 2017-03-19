@@ -6,15 +6,16 @@ using Utilities;
 public class IdentityContainer : MonoBehaviour {
 
     
-    private MeshNetworkIdentity identity;
+    public MeshNetworkIdentity identity;
 
     public void PopulateComponents() {
         if(identity != null) {
-            Debug.Log("Populating identity subcomponents");
+            
             List<IReceivesPacket<MeshPacket>> components = new List<IReceivesPacket<MeshPacket>>();
             components.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
             identity.attachedComponents = components;
-            foreach(IReceivesPacket<MeshPacket> c in components) {
+            Debug.Log("Populated " + identity.attachedComponents.Count +" subcomponents");
+            foreach (IReceivesPacket<MeshPacket> c in components) {
                 if(c is INetworked<MeshNetworkIdentity>) {
                     INetworked<MeshNetworkIdentity> networked = c as INetworked<MeshNetworkIdentity>;
                     networked.SetIdentity(identity);
