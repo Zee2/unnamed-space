@@ -30,12 +30,13 @@ public class TestObjectSpawner : MonoBehaviour {
         float timeStart = Time.time;
         MeshNetworkIdentity requestedID = new MeshNetworkIdentity(0, 2, meshnet.GetSteamID(), false);
         ushort returnedObjectID = (ushort)ReservedObjectIDs.Unspecified;
+        Debug.Log("Asking scheduler to make spawn request");
         scheduler.ScheduleChange(requestedID, StateChange.Addition, ref returnedObjectID);
 
         while(returnedObjectID == (ushort)ReservedObjectIDs.Unspecified) {
             if(Time.time - timeStart > SPAWN_TIMEOUT) {
                 Debug.LogError("Spawn timeout");
-                yield return null;
+                yield break;
             }
             yield return new WaitForEndOfFrame();
         }

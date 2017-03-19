@@ -72,18 +72,6 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         else {
             Debug.Log("Couldn't find debug text.");
         }
-        GameObject mn = GameObject.FindGameObjectWithTag("DatabaseDebug");
-        if (debug != null) {
-            UnityEngine.UI.Text t = debug.GetComponent<UnityEngine.UI.Text>();
-            if (t != null) {
-                debugText = t;
-                Debug.Log("Succesfully set debug text");
-            } else {
-                Debug.Log("Couldn't find text component");
-            }
-        } else {
-            Debug.Log("Couldn't find debug text.");
-        }
     }
 
     //If we have debug readout, update the readout

@@ -10,6 +10,7 @@ public class IdentityContainer : MonoBehaviour {
 
     public void PopulateComponents() {
         if(identity != null) {
+            Debug.Log("Populating identity subcomponents");
             List<IReceivesPacket<MeshPacket>> components = new List<IReceivesPacket<MeshPacket>>();
             components.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
             identity.attachedComponents = components;

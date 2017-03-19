@@ -113,6 +113,7 @@ public class MeshEndpoint : MonoBehaviour {
     }
 
     public void SendDirectToSteamID(MeshPacket packet, CSteamID id) {
+        Debug.Log("Direct sending. You sure you want to do this?");
         byte[] data = packet.GetSerializedBytes();
         SteamNetworking.SendP2PPacket(id, data, (uint)data.Length, EP2PSend.k_EP2PSendReliable);
     }
