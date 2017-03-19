@@ -7,23 +7,24 @@ using System.Collections.Generic;
 using System;
 using Steamworks;
 
-    /*
-        Utilities.cs
-        Copyright 2017 Finn Sinclair
+/*
+    Utilities.cs
+    Copyright 2017 Finn Sinclair
 
-        Assorted helper classes, wrapper classes, data enumerations,
-        and other useful bits and pieces.
+    Assorted helper classes, wrapper classes, data enumerations,
+    and other useful bits and pieces.
 
-        Data serialization and deserialization routines are included
-        in MeshPacket and DatabaseUpdate. More comprehensive summaries
-        of those two classes can be found next to their location in the
-        source.
+    Data serialization and deserialization routines are included
+    in MeshPacket and DatabaseUpdate. More comprehensive summaries
+    of those two classes can be found next to their location in the
+    source.
 
-        The large amount of code at the bottom simply simulates a full
-        database update, to verify that the serialization systems are working.
-    */
+    The large amount of code at the bottom simply simulates a full
+    database update, to verify that the serialization systems are working.
+*/
 
 namespace Utilities {
+
 
     public enum ReservedObjectIDs : ushort {
         Unspecified = 0,
@@ -63,19 +64,21 @@ namespace Utilities {
         FullUpdateRequest = 9,
         DatabaseUpdate = 10,
         PlayerJoin = 11,
-        DatabaseChangeRequest = 12
-        
+        DatabaseChangeRequest = 12,
+        DatabaseChangeEcho = 13
+
     }
 
     public enum ConnectionStatus {
         Pending, Connected, Disconnected
     }
 
-    public enum StateChange:byte {
+    public enum StateChange : byte {
         Addition = 0,
         Removal = 1,
         Change = 2,
-        Override = 3
+        Override = 3,
+        Unspecified = 4
     }
 
     public struct GamePublishingInfo {
@@ -99,17 +102,24 @@ namespace Utilities {
         }
     }
 
+
+
     public struct DatabaseChangeResult {
         public bool success;
         public string error;
+        public ushort data;
 
         public DatabaseChangeResult(bool s, string e) {
             success = s;
             error = e;
+            data = 0;
+        }
+        public DatabaseChangeResult(bool s, ushort data) {
+            success = s;
+            this.data = data;
+            error = "";
         }
     }
-
-
 
     /*
         Utilities.Player
@@ -127,10 +137,10 @@ namespace Utilities {
             displayName = "DefaultPlayerName";
             uniqueID = 0;
             privateKey = "DefaultPrivateKey";
-            
+
         }
 
-        public Player(string name, 
+        public Player(string name,
             ulong id,
             string privateKey) {
 
@@ -141,7 +151,7 @@ namespace Utilities {
         }
 
         public void SetName(string n) {
-            displayName = n.Replace(":", "$COLON");
+            displayName = n.Replace(":", "$COLON").Substring(0, Mathf.Min(20, n.Length));
         }
         public string GetNameSanitized() {
             return displayName;
@@ -156,8 +166,8 @@ namespace Utilities {
         public ulong GetUniqueID() {
             return uniqueID;
         }
-        
-        
+
+
         public void SetPrivateKey(string k) {
             privateKey = k;
         }
@@ -180,7 +190,7 @@ namespace Utilities {
             return p;
         }
 
-        
+
 
     }
 
@@ -195,6 +205,14 @@ namespace Utilities {
     */
 
     public class MeshPacket {
+
+        public static readonly List<PacketType> RELIABLE_TYPES = new List<PacketType>(new PacketType[] { PacketType.DatabaseUpdate,
+            PacketType.FullUpdateRequest,
+            PacketType.PlayerJoin,
+            PacketType.DatabaseChangeEcho,
+            PacketType.DatabaseChangeRequest });
+        public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{ PacketType.VOIP });
+
 
         private byte[] contents;
         private PacketType type;
@@ -243,6 +261,14 @@ namespace Utilities {
 
         public void SetPacketType(PacketType p) {
             type = p;
+            if(RELIABLE_TYPES.Contains(p)){
+                qos = EP2PSend.k_EP2PSendReliable;
+            }else if (NO_DELAY_TYPES.Contains(p)) {
+                qos = EP2PSend.k_EP2PSendUnreliableNoDelay;
+            }
+            else {
+                qos = EP2PSend.k_EP2PSendUnreliable;
+            }
         }
         public PacketType GetPacketType() {
             return type;
@@ -289,7 +315,7 @@ namespace Utilities {
             return output.ToArray();
         }
 
-        
+
 
     }
 
@@ -314,7 +340,7 @@ namespace Utilities {
     */
 
 
-    public class DatabaseUpdate {
+    public class DatabaseUpdate : IMeshSerializable{
 
         //These dictionaries are treated as deltas (why send the entire database?)
         public Dictionary<Player, StateChange> playerDelta = new Dictionary<Player, StateChange>();
@@ -330,12 +356,12 @@ namespace Utilities {
         public DatabaseUpdate(Dictionary<Player, StateChange> players,
             Dictionary<MeshNetworkIdentity, StateChange> objects,
             ushort databaseHash) {
-            
+
             playerDelta = players;
             objectDelta = objects;
             fullHash = databaseHash;
         }
-        
+
 
         public void DeserializeAndApply(byte[] serializedData) {
             DatabaseUpdate decoded = DatabaseUpdate.ParseContentAsDatabaseUpdate(serializedData);
@@ -348,7 +374,7 @@ namespace Utilities {
         //contained objects and players.
         public byte[] GetSerializedBytes() {
             List<byte> output = new List<byte>();
-            
+
 
             byte numPlayers = (byte)playerDelta.Keys.Count;
             output.Add(numPlayers);
@@ -360,7 +386,7 @@ namespace Utilities {
             }
             byte numObjects = (byte)objectDelta.Keys.Count;
             output.Add(numObjects);
-            foreach(MeshNetworkIdentity m in objectDelta.Keys) {
+            foreach (MeshNetworkIdentity m in objectDelta.Keys) {
                 byte[] serializedObject = m.GetSerializedBytes();
                 output.AddRange(serializedObject);
                 output.Add((byte)objectDelta[m]);
@@ -416,6 +442,111 @@ namespace Utilities {
 
     }
 
+    public class StateChangeTransaction : IMeshSerializable{
+        ushort transactionID;
+        StateChange changeType;
+        MeshNetworkIdentity obj;
+
+        public ushort GetTransactionID() {
+            return transactionID;
+        }
+        public void SetTransactionID(ushort input) {
+            transactionID = input;
+        }
+        public StateChange GetChangeType() {
+            return changeType;
+        }
+        public void SetChangeType(StateChange c) {
+            changeType = c;
+        }
+        public MeshNetworkIdentity GetObjectData() {
+            return obj;
+        }
+        public void SetObjectData(MeshNetworkIdentity i) {
+            obj = i;
+        }
+
+        public StateChangeTransaction() {
+            transactionID = 0;
+            changeType = StateChange.Unspecified;
+            obj = null;
+        }
+        public StateChangeTransaction(ushort id, StateChange type, MeshNetworkIdentity i) {
+            transactionID = id;
+            changeType = type;
+            obj = i;
+        }
+
+        public byte[] GetSerializedBytes() {
+            List<byte> output = new List<byte>();
+            output.AddRange(BitConverter.GetBytes(transactionID));
+            output.Add((byte)changeType);
+            if(obj == null) {
+                output.Add(0);
+            }
+            else {
+                output.Add(1);
+                output.AddRange(obj.GetSerializedBytes());
+            }
+            return output.ToArray();
+        }
+        
+        public static StateChangeTransaction ParseSerializedBytes(byte[] data) {
+            StateChangeTransaction transaction = new StateChangeTransaction();
+            transaction.SetTransactionID(BitConverter.ToUInt16(data, 0));
+            transaction.SetChangeType((StateChange)data[2]);
+            
+            if(data[3] == 1) {
+                byte[] dataEndCap = new byte[data.Length - 4];
+                Buffer.BlockCopy(data, 4, dataEndCap, 0, dataEndCap.Length); //hmmm
+                MeshNetworkIdentity i = new MeshNetworkIdentity();
+                i.DeserializeAndApply(dataEndCap);
+                transaction.SetObjectData(i);
+            }
+            return transaction;
+        }
+    }
+
+    public class StateChangeEcho : IMeshSerializable {
+        ushort transactionID;
+        ushort objectID;
+
+        public StateChangeEcho() {
+            transactionID = 0;
+            objectID = 0;
+        }
+        public StateChangeEcho(ushort transactionID, ushort objectID) {
+            this.transactionID = transactionID;
+            this.objectID = objectID;
+        }
+        public ushort GetTransactionID() {
+            return transactionID;
+        }
+        public void SetTransactionID(ushort id) {
+            transactionID = id;
+        }
+        public ushort GetObjectID() {
+            return objectID;
+        }
+        public void SetObjectID(ushort id) {
+            objectID = id;
+        }
+
+        public byte[] GetSerializedBytes() {
+            List<byte> output = new List<byte>();
+            output.AddRange(BitConverter.GetBytes(transactionID));
+            output.AddRange(BitConverter.GetBytes(objectID));
+            return output.ToArray();
+        }
+
+        public static StateChangeEcho ParseSerializedBytes(byte[] data) {
+            StateChangeEcho echo = new StateChangeEcho();
+            echo.transactionID = BitConverter.ToUInt16(data, 0);
+            echo.objectID = BitConverter.ToUInt16(data, 2);
+            return echo;
+        }
+    }
+
     
     //All networked components must implement this.
     public interface IReceivesPacket<MeshPacket> {
@@ -434,7 +565,7 @@ namespace Utilities {
         //Runs some checks to make sure that the serialization
         //systems are running and correctly translating the data.
         //TODO automate checking
-        public static void DebugDatabaseSerialization(MeshNetworkIdentity dummy1, MeshNetworkIdentity dummy2) {
+        public static void DebugDatabaseSerialization() {
             Debug.Log("Creating player named Mary Jane.");
             Player p1 = new Player("Mary Jananee", 2233443, "abcde");
             Debug.Log("Creating player named John Smith");
@@ -444,10 +575,15 @@ namespace Utilities {
             db.playerDelta.Add(p1, StateChange.Addition);
             db.playerDelta.Add(p2, StateChange.Removal);
 
+
+            MeshNetworkIdentity dummy1 = new MeshNetworkIdentity();
+            MeshNetworkIdentity dummy2 = new MeshNetworkIdentity();
             dummy1.SetObjectID(1337);
             dummy1.SetOwnerID(1234);
+            dummy1.SetLocked(true);
             dummy2.SetObjectID(4200);
             dummy2.SetOwnerID(4321);
+            dummy2.SetLocked(false);
 
             db.objectDelta.Add(dummy1, StateChange.Change);
             db.objectDelta.Add(dummy2, StateChange.Addition);
@@ -463,6 +599,11 @@ namespace Utilities {
             p.SetContents(db.GetSerializedBytes());
             
             byte[] transmitData = p.GetSerializedBytes();
+
+
+
+
+
 
             //THIS WOULD GET SENT ACROSS THE NETWORK
 
@@ -485,6 +626,7 @@ namespace Utilities {
                 Debug.Log("objectID: " + id.GetObjectID());
                 Debug.Log("prefabID: " + id.GetPrefabID());
                 Debug.Log("ownerID : " + id.GetOwnerID());
+                Debug.Log("Locked: " + id.GetLocked());
                 i++;
             }
             Debug.Log("Total number of players: " + receivedDB.playerDelta.Count);
@@ -497,6 +639,36 @@ namespace Utilities {
                 Debug.Log("privateKey: " + player.GetPrivateKey());
                 i++;
             }
+        }
+
+        public static void BitTesting() {
+            Debug.Log("Making int of 50");
+            int a = 250;
+            byte fromCasting = (byte)a;
+            Debug.Log("Casted: " + fromCasting);
+        }
+
+        public static void TransactionTesting() {
+            StateChangeTransaction t = new StateChangeTransaction(1234, StateChange.Addition, new MeshNetworkIdentity(101, 2, 1234, true));
+            byte[] bytes = t.GetSerializedBytes();
+            MeshPacket p = new MeshPacket(bytes, PacketType.DatabaseChangeRequest, 4325, 911, 45, 45);
+            byte[] bytesToSend = p.GetSerializedBytes();
+
+            //SENDDDD
+
+            MeshPacket destPacket = new MeshPacket(bytesToSend);
+            Debug.Log("Source player: " + destPacket.GetSourcePlayerId());
+            Debug.Log("Source object: " + destPacket.GetSourceObjectId());
+            Debug.Log("Target player: " + destPacket.GetTargetPlayerId());
+            Debug.Log("Target object: " + destPacket.GetTargetObjectId());
+            Debug.Log("Packet type: " + destPacket.GetPacketType());
+            Debug.Log("<<<<<<  Transaction:  >>>>>>");
+            StateChangeTransaction destTransaction = StateChangeTransaction.ParseSerializedBytes(destPacket.GetContents());
+            Debug.Log("Change type: " + destTransaction.GetChangeType());
+            Debug.Log("Transaction id: " + destTransaction.GetTransactionID());
+            Debug.Log("Object id: " + destTransaction.GetObjectData().GetObjectID());
+            Debug.Log("Owner id: " + destTransaction.GetObjectData().GetOwnerID());
+
         }
     }
 

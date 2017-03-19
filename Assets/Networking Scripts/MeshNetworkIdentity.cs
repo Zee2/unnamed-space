@@ -32,27 +32,31 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     /// 
     /// </summary>
 
-    public const int NETWORK_IDENTITY_BYTE_SIZE = 12;
+    public const int NETWORK_IDENTITY_BYTE_SIZE = 13;
 
     public MeshNetwork meshnetReference;
     ushort objectID;
     ushort prefabID;
     ulong ownerID;
+    bool locked;
 
     //Not serialized across the network! This gets initialized and populated
     //when the container component is enabled. All IReceivesPacket components
     //attached to the relevant object will wind up in this List<>.
     public List<IReceivesPacket<MeshPacket>> attachedComponents;
 
-    public MeshNetworkIdentity(ushort objectID, ushort prefabID, ulong ownerID) {
+    public MeshNetworkIdentity(ushort objectID, ushort prefabID, ulong ownerID, bool locked) {
         this.objectID = objectID;
         this.prefabID = prefabID;
         this.ownerID = ownerID;
+        this.locked = locked;
+        
     }
     public MeshNetworkIdentity() {
         this.objectID = (ushort)ReservedObjectIDs.Unspecified;
         this.prefabID = (ushort)ReservedPrefabIDs.Unspecified;
         this.ownerID = (ulong)ReservedPlayerIDs.Unspecified;
+        this.locked = false;
     }
 
     public void ReceivePacket(MeshPacket p) {
@@ -90,6 +94,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
         output.AddRange(BitConverter.GetBytes(objectID));
         output.AddRange(BitConverter.GetBytes(prefabID));
         output.AddRange(BitConverter.GetBytes(ownerID));
+        output.AddRange(BitConverter.GetBytes(locked));
         if(output.ToArray().Length != NETWORK_IDENTITY_BYTE_SIZE) {
             Debug.LogError("Something's wrong with the network identity serialization");
             Debug.LogError("GetSerializedBytes returned " + output.ToArray().Length + "bytes");
@@ -100,6 +105,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
         objectID = BitConverter.ToUInt16(data, 0);
         prefabID = BitConverter.ToUInt16(data, 2);
         ownerID = BitConverter.ToUInt64(data, 4);
+        locked = BitConverter.ToBoolean(data, 12);
     }
 
     public ushort GetObjectID() {
@@ -119,6 +125,12 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     }
     public void SetOwnerID(ulong id) {
         ownerID = id;
+    }
+    public bool GetLocked() {
+        return locked;
+    }
+    public void SetLocked(bool l) {
+        locked = l;
     }
 
     public void SetMeshnetReference(MeshNetwork net) {

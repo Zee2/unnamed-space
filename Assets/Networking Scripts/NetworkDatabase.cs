@@ -190,7 +190,8 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
             Debug.Log("Warning: creating database object. This should only happen once!");
         }
-
+        
+        //If the object isn't the database, we need to assign an available objectID
         if(i.GetObjectID() != (ushort)ReservedObjectIDs.DatabaseObject) {
             IDAssignmentResult idresult = GetAvailableObjectID(); //Look for an available object id
             if (idresult.success) {
@@ -202,7 +203,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         objectList.Add(i.GetObjectID(), i);
         if (GetAuthorized()) {
             SendObjectUpdate(i, StateChange.Addition);
-            return new DatabaseChangeResult(true, "");
+            return new DatabaseChangeResult(true, i.GetObjectID());
         }
         return new DatabaseChangeResult(false, "Unknown error");
     }
@@ -221,7 +222,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         objectList.Remove(i.GetObjectID());
         if (GetAuthorized()) {
             SendObjectUpdate(i, StateChange.Removal);
-            return new DatabaseChangeResult(true, "");
+            return new DatabaseChangeResult(true, i.GetObjectID());
         }
         return new DatabaseChangeResult(false, "Unknown error");
     }
@@ -241,7 +242,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         objectList[i.GetObjectID()] = i;
         if (GetAuthorized()) {
             SendObjectUpdate(i, StateChange.Change);
-            return new DatabaseChangeResult(true, "");
+            return new DatabaseChangeResult(true, i.GetObjectID());
         }
         return new DatabaseChangeResult(false, "Unknown error");
     }
@@ -472,30 +473,85 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
     }
 
-    public void RequestStateChange(MeshNetworkIdentity i, StateChange c) {
 
-        if (GetAuthorized()) {
-            Debug.LogError("'Requesting' to change database entry, but already authorized.");
-            return;
-        }
-        Dictionary<MeshNetworkIdentity, StateChange> objectDict = new Dictionary<MeshNetworkIdentity, StateChange>();
-        objectDict.Add(i, c);
-        DatabaseUpdate dbup = new DatabaseUpdate(new Dictionary<Player, StateChange>(), objectDict, 0);
-        MeshPacket p = new MeshPacket(dbup.GetSerializedBytes(),
-            PacketType.DatabaseChangeRequest,
-            GetIdentity().meshnetReference.GetSteamID(),
-            GetIdentity().GetOwnerID(),
-            GetIdentity().GetObjectID(),
-            GetIdentity().GetObjectID());
 
-        GetIdentity().RoutePacket(p);
-    }
+    /*
+        Users SHOULD be able to:
+            Request object creation and assign the object to themselves
+            Request object ownership change of others' objects if the object is unlocked
+            Request object deletion of their own objects
 
+
+        Users SHOULD NOT be able to:
+            Request object deletion of others' objects
+            Create objects and make other players the owner
+            Request object ownership change of others' objects if the object is locked
+            Request changing objects' objectID, prefabID, or any other 
+
+    */
     public void ConsiderChangeRequest(MeshPacket p) {
         if(GetAuthorized() == false) {
             Debug.LogError("Being asked to change the database when not authorized!");
             return;
         }
+        if(LookupPlayer(p.GetSourcePlayerId()) == null) {
+            Debug.LogError("Change request source player does not exist on the database");
+            return;
+        }
+
+        StateChangeTransaction transaction = StateChangeTransaction.ParseSerializedBytes(p.GetContents());
+        if(transaction.GetChangeType() == StateChange.Addition) {
+            //Check if the desired owner is the packet sender
+            if(p.GetSourcePlayerId() != transaction.GetObjectData().GetOwnerID()) {
+                Debug.LogError("Requested object creation tries to assign to new player: prohibited");
+                return;
+            }
+            DatabaseChangeResult result = AddObject(transaction.GetObjectData());
+            if(result.success == false) {
+                Debug.LogError("Requested object addition failed: " + result.error);
+                return;
+            }
+            else {
+                EchoChangeRequest(transaction.GetTransactionID(), result.data, p.GetSourcePlayerId());
+            }
+            
+        }else if(transaction.GetChangeType() == StateChange.Removal) {
+            //Check if requesting user owns the object
+            if(p.GetSourcePlayerId() != transaction.GetObjectData().GetOwnerID()) {
+                Debug.LogError("User trying to remove an object that doesn't belong to them");
+                return;
+            }
+            MeshNetworkIdentity localObjectToRemove = LookupObject(transaction.GetObjectData().GetObjectID());
+            if(localObjectToRemove == null) {
+                Debug.LogError("Couldn't find the object requested to be removed.");
+            }
+            DatabaseChangeResult result = RemoveObject(LookupObject(transaction.GetObjectData().GetObjectID()));
+            if(result.success == false) {
+                Debug.LogError("Requested object removal failed: " + result.error);
+                return;
+            }
+            else {
+                EchoChangeRequest(transaction.GetTransactionID(), localObjectToRemove.GetObjectID(), p.GetSourcePlayerId());
+            }
+        }
+    }
+
+    public void EchoChangeRequest(ushort transactionID, ushort objectID, ulong destinationPlayer) {
+
+        if (!GetAuthorized()) {
+            Debug.LogError("Not authorized to echo");
+            return;
+        }
+        
+        StateChangeEcho echo = new StateChangeEcho(transactionID, objectID);
+        MeshPacket packet = new MeshPacket();
+        packet.SetPacketType(PacketType.DatabaseChangeEcho);
+        packet.SetContents(echo.GetSerializedBytes());
+        packet.SetTargetPlayerId(destinationPlayer);
+        packet.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
+        packet.SetSourcePlayerId(GetIdentity().GetOwnerID());
+        packet.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
+        GetIdentity().RoutePacket(packet);
     }
     
 }

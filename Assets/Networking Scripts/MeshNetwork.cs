@@ -43,7 +43,9 @@ public class MeshNetwork : MonoBehaviour {
 
         DontDestroyOnLoad(gameObject);
 
-        //Testing.DebugDatabaseSerialization(gameObject.AddComponent<MeshNetworkIdentity>(), gameObject.AddComponent<MeshNetworkIdentity>());
+        //Testing.DebugDatabaseSerialization();
+        //Testing.BitTesting();
+        //Testing.TransactionTesting();
         networkUIController = gameObject.GetComponent<UIController>();
 
         
@@ -136,7 +138,7 @@ public class MeshNetwork : MonoBehaviour {
         //Construct the network database. Very important!
         MeshNetworkIdentity databaseID = new MeshNetworkIdentity((ushort)ReservedObjectIDs.DatabaseObject, 
             (ushort)ReservedPrefabIDs.Database, 
-            (ulong)GetSteamID());
+            (ulong)GetSteamID(), true);
         
         database = game.SpawnObject(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
         Debug.Log("Registering database.");
