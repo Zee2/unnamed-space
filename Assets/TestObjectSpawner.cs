@@ -16,7 +16,7 @@ public class TestObjectSpawner : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (Input.GetKeyDown(KeyCode.Space)) {
+        if (Input.GetKeyDown(KeyCode.Insert)) {
             scheduler = meshnet.database.gameObject.GetComponent<StateChangeScheduler>();
             if(scheduler == null) {
                 Debug.LogError("Couldn't find scheduler");
