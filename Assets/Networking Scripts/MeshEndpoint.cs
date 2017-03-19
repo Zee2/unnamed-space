@@ -40,12 +40,13 @@ public class MeshEndpoint : MonoBehaviour {
         Receive();
     }
     public void Receive() {
+        /*
         if (failedPackets.Count > 0) {
             MeshPacket p = failedPackets[0];
             failedPackets.RemoveAt(0);
             ParseData(p);
         }
-
+        */
 
         uint bufferLength = 0;
         if (SteamNetworking.IsP2PPacketAvailable(out bufferLength)) {
@@ -63,6 +64,8 @@ public class MeshEndpoint : MonoBehaviour {
 
     
     void ParseData(MeshPacket incomingPacket) {
+
+        Debug.Log("Packet parsing: type = " + incomingPacket.GetPacketType() + ", source playerID = " + incomingPacket.GetSourcePlayerId() + ", target objectID = " + incomingPacket.GetTargetObjectId());
 
         if(incomingPacket.GetSourcePlayerId() == SteamUser.GetSteamID().m_SteamID) {
             Debug.Log("Discarding packet from self");

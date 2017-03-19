@@ -52,7 +52,7 @@ public class TestObjectSpawner : MonoBehaviour {
         while (returnedObjectID == (ushort)ReservedObjectIDs.Unspecified) {
             if (Time.time - timeStart > SPAWN_TIMEOUT) {
                 Debug.LogError("Spawn timeout");
-                yield return null;
+                yield break;
             }
             yield return new WaitForEndOfFrame();
         }
