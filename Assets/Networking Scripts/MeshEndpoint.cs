@@ -125,6 +125,7 @@ public class MeshEndpoint : MonoBehaviour {
         byte[] data = packet.GetSerializedBytes();
         Player[] allPlayers = meshnet.database.GetAllPlayers();
         if (packet.GetTargetPlayerId() == (byte)ReservedPlayerIDs.Broadcast) {
+            Debug.Log("Endpoint is using broadcast!");
             foreach (Player p in allPlayers) {
                 SteamNetworking.SendP2PPacket(new CSteamID(p.GetUniqueID()), data, (uint)data.Length, packet.qos);
             }
