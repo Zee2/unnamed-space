@@ -66,7 +66,6 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     ushort GetAvailableTransactionID() {
         for(ushort i = 1; i < ushort.MaxValue; i++) {
             if(callbackRegistry.ContainsKey(i) == false) {
-                
                 return i;
             }
         }
@@ -74,6 +73,11 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     public bool ScheduleChange(MeshNetworkIdentity id, StateChange change, ref ushort callbackObjectID) {
+        if(GetIdentity().meshnetReference.database == null) {
+            Debug.LogError("Can't schedule a state change without an active database");
+            return false;
+        }
+
         ushort transactionID = GetAvailableTransactionID();
         if(transactionID == 0) {
             Debug.LogError("State change scheduler ran out of available transaction IDs");
@@ -90,7 +94,15 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         p.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         p.SetTargetPlayerId(netDB.GetIdentity().GetOwnerID());
         Debug.Log("Scheduler sending packet: target player ID = " + p.GetTargetPlayerId() + ", target object ID = " + p.GetTargetObjectId());
-        GetIdentity().RoutePacket(p);
-        return true;
+
+
+        if (GetIdentity().IsLocallyOwned()) { //If we own the database, we can't send packets (they will be rejected)
+            GetIdentity().ReceivePacket(p); //Redirect packet to our own identity
+            return true;
+        } else {
+            GetIdentity().RoutePacket(p);
+            return true;
+        }
+        
     }
 }

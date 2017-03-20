@@ -140,7 +140,7 @@ public class MeshNetwork : MonoBehaviour {
             (ushort)ReservedPrefabIDs.Database, 
             (ulong)GetSteamID(), true);
         
-        database = game.SpawnObject(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
+        database = game.SpawnDatabase(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
         Debug.Log("Registering database.");
         database.AddObject(databaseID); //Tells the database that it itself exists (funny)
         
@@ -288,7 +288,7 @@ public class MeshNetwork : MonoBehaviour {
         foreach(MeshNetworkIdentity i in u.objectDelta.Keys) {
             if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
                 flagHasFoundDatabase = true;
-                database = game.SpawnObject(i).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
+                database = game.SpawnDatabase(i).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
                 databaseID = i;
                 break;
             }

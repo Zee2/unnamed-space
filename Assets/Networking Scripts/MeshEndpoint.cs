@@ -67,7 +67,7 @@ public class MeshEndpoint : MonoBehaviour {
 
         Debug.Log("Packet parsing: type = " + incomingPacket.GetPacketType() + ", source playerID = " + incomingPacket.GetSourcePlayerId() + ", target objectID = " + incomingPacket.GetTargetObjectId());
 
-        if(incomingPacket.GetSourcePlayerId() == SteamUser.GetSteamID().m_SteamID) {
+        if(incomingPacket.GetSourcePlayerId() == meshnet.GetSteamID()) {
             Debug.Log("Discarding packet from self");
             return;
         }

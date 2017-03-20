@@ -32,7 +32,7 @@ namespace Utilities {
     }
     public enum ReservedPlayerIDs : ulong {
         Unspecified = 0,
-        Broadcast = 1,
+        Broadcast = 1
     }
     public enum ReservedPrefabIDs : ushort {
         Unspecified = 0,
@@ -421,7 +421,6 @@ namespace Utilities {
                 i++;
             }
             byte numOfObjects = rawData[pointer];
-            Debug.Log("DatabaseDeserialize numOfObjects = " + numOfObjects);
             pointer++; //pointer now at the beginning of the first MeshNetworkIdentity data
             byte j = 0;
             while (j < numOfObjects) {

@@ -457,12 +457,12 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                     objectList.Add((ushort)ReservedObjectIDs.DatabaseObject, GetIdentity()); //IMPORTANT: Create recursive pointer
                 }else {
                     objectList.Add(i.GetObjectID(), i);
-                    game.SpawnObject(i);
+                    game.SpawnObject(i.GetObjectID());
                 }
             }
             else if (dbup.objectDelta[i] == StateChange.Removal) {
                 objectList.Remove(i.GetObjectID());
-                game.RemoveObject(i);
+                game.RemoveObject(i.GetObjectID());
             }
             else if (dbup.objectDelta[i] == StateChange.Change) {
                 objectList[i.GetObjectID()] = i;
