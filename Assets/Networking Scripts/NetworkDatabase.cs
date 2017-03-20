@@ -34,9 +34,12 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     public const ushort OBJECT_ID_MIN = 10;
     public const ushort OBJECT_ID_MAX = 65500;
 
+    
+
     public bool UseFullUpdates = false; //Should the network database send the entire database every time something changes?
     public MeshNetworkIdentity thisObjectIdentity; //Required for INetworked
     UnityEngine.UI.Text debugText;
+    GameCoordinator game;
 
     //Serialized below here.
     private Dictionary<ulong, Player> playerList = new Dictionary<ulong, Player>();
@@ -71,6 +74,18 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
         else {
             Debug.Log("Couldn't find debug text.");
+        }
+        GameObject foundGameCoord = GameObject.FindGameObjectWithTag("NetworkArchitecture");
+        if (foundGameCoord != null) {
+            GameCoordinator g = foundGameCoord.GetComponent<GameCoordinator>();
+            if (g != null) {
+                game = g;
+                Debug.Log("Successfully found game coordinator");
+            } else {
+                Debug.Log("Couldn't find GameCoordinator component");
+            }
+        } else {
+            Debug.Log("Couldn't find network architecture.");
         }
     }
 
@@ -238,7 +253,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //Checks if there is an object ID available for use, and returns it if there is one
     public IDAssignmentResult GetAvailableObjectID() {
         for(ushort u = OBJECT_ID_MIN; u <= OBJECT_ID_MAX; u++) {
-            if(LookupObject(u) == null) {
+            if(objectList.ContainsKey(u) == false) {
                 IDAssignmentResult positiveResult;
                 positiveResult.id = u;
                 positiveResult.success = true;
@@ -434,10 +449,20 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
         foreach (MeshNetworkIdentity i in dbup.objectDelta.Keys) {
             if (dbup.objectDelta[i] == StateChange.Addition) {
-                objectList.Add(i.GetObjectID(), i);
+
+                //If the incoming object is the database, we don't want to create it
+                //(because this script is running off of the already created database!)
+                //We only want to create a recursive link.
+                if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
+                    objectList.Add((ushort)ReservedObjectIDs.DatabaseObject, GetIdentity()); //IMPORTANT: Create recursive pointer
+                }else {
+                    objectList.Add(i.GetObjectID(), i);
+                    game.SpawnObject(i);
+                }
             }
             else if (dbup.objectDelta[i] == StateChange.Removal) {
                 objectList.Remove(i.GetObjectID());
+                game.RemoveObject(i);
             }
             else if (dbup.objectDelta[i] == StateChange.Change) {
                 objectList[i.GetObjectID()] = i;

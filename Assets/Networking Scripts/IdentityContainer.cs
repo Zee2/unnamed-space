@@ -11,11 +11,12 @@ public class IdentityContainer : MonoBehaviour {
     public void PopulateComponents() {
         if(identity != null) {
             
-            List<IReceivesPacket<MeshPacket>> components = new List<IReceivesPacket<MeshPacket>>();
-            components.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
-            identity.attachedComponents = components;
-            Debug.Log("Populated " + identity.attachedComponents.Count +" subcomponents");
-            foreach (IReceivesPacket<MeshPacket> c in components) {
+            identity.attachedComponents = new List<IReceivesPacket<MeshPacket>>();
+            identity.attachedComponents.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
+            Debug.Log("Populated " + identity.attachedComponents.Count +" subcomponents on objectID " + identity.GetObjectID());
+
+            foreach (IReceivesPacket<MeshPacket> c in identity.attachedComponents) {
+                Debug.Log("Component: " + c.GetType());
                 if(c is INetworked<MeshNetworkIdentity>) {
                     INetworked<MeshNetworkIdentity> networked = c as INetworked<MeshNetworkIdentity>;
                     networked.SetIdentity(identity);

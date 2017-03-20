@@ -55,7 +55,7 @@ public class MeshEndpoint : MonoBehaviour {
             UInt32 bytesRead = 0;
             CSteamID remoteID;
             SteamNetworking.ReadP2PPacket(destBuffer, bufferLength, out bytesRead, out remoteID);
-
+            Debug.Log("CSteamID remoteID = " + remoteID.m_SteamID);
             ParseData(new MeshPacket(destBuffer));
         }
         
@@ -105,10 +105,12 @@ public class MeshEndpoint : MonoBehaviour {
         }
 
         MeshNetworkIdentity targetObject = meshnet.database.LookupObject(incomingPacket.GetTargetObjectId());
+        
         if (targetObject == null) {
             Debug.LogError("Packet's target object doesn't exist on the database!");
             return;
         }
+        Debug.Log("Retrieved object: " + targetObject.meshnetReference);
 
         targetObject.ReceivePacket(incomingPacket);
 

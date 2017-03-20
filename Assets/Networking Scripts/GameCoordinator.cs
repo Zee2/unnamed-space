@@ -21,6 +21,7 @@ public class GameCoordinator : MonoBehaviour {
 
     //Network Prefab Registry
     Dictionary<ushort, GameObject> networkPrefabs = new Dictionary<ushort, GameObject>();
+    Dictionary<ushort, GameObject> activeObjects = new Dictionary<ushort, GameObject>();
 
     public void Start() {
         DontDestroyOnLoad(gameObject);
@@ -46,26 +47,50 @@ public class GameCoordinator : MonoBehaviour {
         return;
     }
 
+    
     //This simply instantiates a network prefab. It does not update the database.
+    //The objct should already exist on the database.
     public GameObject SpawnObject(MeshNetworkIdentity i) {
 
         if(meshnet == null) {
             Debug.LogError("Trying to spawn object when underlying mesh network not intialized.");
             return null;
         }
+        if(meshnet.database.LookupObject(i.GetObjectID()) == null) {
+            Debug.LogError("Trying to spawn network object without presence on the database");
+            return null;
+        }
+        MeshNetworkIdentity localIdentity = meshnet.database.LookupObject(i.GetObjectID());
 
-        i.SetMeshnetReference(meshnet); //set a reference to the mesh network
-        if (networkPrefabs.ContainsKey(i.GetPrefabID()) == false) {
+        localIdentity.SetMeshnetReference(meshnet); //set a reference to the mesh network
+        if (networkPrefabs.ContainsKey(localIdentity.GetPrefabID()) == false) {
             Debug.LogError("NetworkPrefab registry error: Requested prefab ID does not exist.");
             return null;
         }
-        GameObject g = Instantiate(networkPrefabs[i.GetPrefabID()]);
+        GameObject g = Instantiate(networkPrefabs[localIdentity.GetPrefabID()]);
         IdentityContainer c = g.GetComponent<IdentityContainer>();
         if (c == null) {
             Debug.LogError("NetworkPrefab error: spawned prefab does not contain IdentityContainer");
             return null;
         }
         c.SetIdentity(i);
+        activeObjects.Add(i.GetObjectID(), g);
         return g;
+    }
+
+    //This simply instantiates a network prefab. It does not update the database.
+    public bool RemoveObject(MeshNetworkIdentity i) {
+        MeshNetworkIdentity localIdentity = meshnet.database.LookupObject(i.GetObjectID());
+        if(localIdentity == null) {
+            Debug.LogError("Can't find the object to delete!");
+            return false;
+        }
+        if(activeObjects.ContainsKey(localIdentity.GetObjectID()) == false) {
+            Debug.LogError("GameCoordinator has no record of object intended for removall");
+            return false;
+        }
+        GameObject.Destroy(activeObjects[localIdentity.GetObjectID()]);
+        activeObjects.Remove(localIdentity.GetObjectID());
+        return true;
     }
 }

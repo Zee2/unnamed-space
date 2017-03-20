@@ -60,6 +60,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     }
 
     public void ReceivePacket(MeshPacket p) {
+        Debug.Log("ReceivePacket: This objectID = " + GetObjectID());
         if(attachedComponents.Count == 0) {
             Debug.Log("This MeshNetworkIdentity has no associated components! Forgot to populate it?");
         }

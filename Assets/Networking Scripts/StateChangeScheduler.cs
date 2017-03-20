@@ -89,7 +89,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         p.SetSourcePlayerId(GetIdentity().meshnetReference.GetSteamID());
         p.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         p.SetTargetPlayerId(netDB.GetIdentity().GetOwnerID());
-        Debug.Log("Scheduler sending packet: target player ID = " + p.GetTargetPlayerId());
+        Debug.Log("Scheduler sending packet: target player ID = " + p.GetTargetPlayerId() + ", target object ID = " + p.GetTargetObjectId());
         GetIdentity().RoutePacket(p);
         return true;
     }
