@@ -435,6 +435,11 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //This is called when the authorized database sends an update to this database.
     //If this object is the authorized database, this should never be called.
     public void ReceiveUpdate(DatabaseUpdate dbup) {
+        Debug.Log("RecieveUpdate: " + dbup.objectDelta.Count + " objects and " + dbup.playerDelta.Count + " players.");
+
+        //TODO: Write safe methods for local addition/deletion etc
+        //TODO: Make sure that network and local references are not confused (StateChange.Change)
+        //TODO: Refactor "override" full update system so that omissions are meaningful
         foreach (Player p in dbup.playerDelta.Keys) {
             if (dbup.playerDelta[p] == StateChange.Addition) {
                 playerList.Add(p.GetUniqueID(), p);
