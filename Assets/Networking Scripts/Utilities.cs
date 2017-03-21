@@ -78,7 +78,8 @@ namespace Utilities {
         Removal = 1,
         Change = 2,
         Override = 3,
-        Unspecified = 4
+        Unspecified = 4,
+        NoChange = 5
     }
 
     public struct GamePublishingInfo {
@@ -148,6 +149,12 @@ namespace Utilities {
             SetUniqueID(id);
             SetPrivateKey(privateKey);
 
+        }
+
+        public void DeepCopyAndApply(Player p) {
+            SetName(p.GetNameDesanitized());
+            SetUniqueID(p.GetUniqueID());
+            SetPrivateKey(p.GetPrivateKey());
         }
 
         public void SetName(string n) {
@@ -346,20 +353,23 @@ namespace Utilities {
         public Dictionary<Player, StateChange> playerDelta = new Dictionary<Player, StateChange>();
         public Dictionary<MeshNetworkIdentity, StateChange> objectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
         public ushort fullHash;
+        public bool isFullUpdate;
 
         public DatabaseUpdate() {
             playerDelta = new Dictionary<Player, StateChange>();
             objectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
             fullHash = 0;
+            isFullUpdate = false;
         }
 
         public DatabaseUpdate(Dictionary<Player, StateChange> players,
             Dictionary<MeshNetworkIdentity, StateChange> objects,
-            ushort databaseHash) {
+            ushort databaseHash, bool fullUpdate) {
 
             playerDelta = players;
             objectDelta = objects;
             fullHash = databaseHash;
+            isFullUpdate = fullUpdate;
         }
 
 
@@ -367,6 +377,8 @@ namespace Utilities {
             DatabaseUpdate decoded = DatabaseUpdate.ParseContentAsDatabaseUpdate(serializedData);
             this.playerDelta = decoded.playerDelta;
             this.objectDelta = decoded.objectDelta;
+            this.fullHash = decoded.fullHash;
+            this.isFullUpdate = decoded.isFullUpdate;
         }
 
 
@@ -392,6 +404,7 @@ namespace Utilities {
                 output.Add((byte)objectDelta[m]);
             }
             output.AddRange(BitConverter.GetBytes(fullHash));
+            output.Add(BitConverter.GetBytes(isFullUpdate)[0]);
             return output.ToArray();
         }
 
@@ -435,7 +448,9 @@ namespace Utilities {
                 j++;
             }
             ushort hash = BitConverter.ToUInt16(rawData, pointer);
-            return new DatabaseUpdate(playerList, networkObjects, hash);
+            pointer += 1;
+            bool fullUpdateFlag = BitConverter.ToBoolean(rawData, pointer);
+            return new DatabaseUpdate(playerList, networkObjects, hash, fullUpdateFlag);
         }
 
 

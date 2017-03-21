@@ -88,6 +88,15 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
             return false;
         }
     }
+    //Performs a deep copy of the given MNI and applies it to the existing object, preserving active pointers
+    //Preserves the existing MeshNetwork reference and the existing list of attached components
+    //These are not serialized across the network (obviously) and thus should not be deepcopied
+    public void DeepCopyAndApply(MeshNetworkIdentity i) {
+        SetLocked(i.GetLocked());
+        SetObjectID(i.GetObjectID());
+        SetOwnerID(i.GetOwnerID());
+        SetPrefabID(i.GetPrefabID());
+    }
 
 
     public byte[] GetSerializedBytes() {

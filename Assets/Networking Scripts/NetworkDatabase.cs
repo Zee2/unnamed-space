@@ -113,15 +113,11 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     }
     
     //Player modification methods
-    public DatabaseChangeResult AddPlayer(Player p) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Not authorized");
-        }
-            
-        Debug.Log("Adding player");
+    public DatabaseChangeResult AddPlayer(Player p, bool publishChange) {
+        
+        
         if (playerList.ContainsKey(p.GetUniqueID())) {
-            Debug.LogError("User already exists!");
+            Debug.Log("Skipping user that already exists");
             return new DatabaseChangeResult(false, "Player already exists");
         }
         if (p.GetUniqueID() == GetIdentity().GetOwnerID() && p.GetUniqueID() != (ulong)ReservedPlayerIDs.Unspecified) {
@@ -132,18 +128,21 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
         }
         playerList.Add(p.GetUniqueID(), p);
-        if (GetAuthorized()) {
-            Debug.Log("Sending player update");
-            SendPlayerUpdate(p, StateChange.Addition);
-            return new DatabaseChangeResult(true, "");
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendPlayerUpdate(p, StateChange.Addition);
+                return new DatabaseChangeResult(true, "Success");
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
         }
-        return new DatabaseChangeResult(false, "Unknown error");
+        else {
+            return new DatabaseChangeResult(true, "Success");
+        }
     }
-    public DatabaseChangeResult RemovePlayer(Player p) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Not authorized");
-        }
+    public DatabaseChangeResult RemovePlayer(Player p, bool publishChange ) {
         if (playerList.ContainsKey(p.GetUniqueID()) == false) {
             Debug.LogError("User that was requested to be removed does not exist!");
             return new DatabaseChangeResult(false, "Player does not exist");
@@ -153,17 +152,22 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             return new DatabaseChangeResult(false, "Can't delete provider");
         }
         playerList.Remove(p.GetUniqueID());
-        if (GetAuthorized()) {
-            SendPlayerUpdate(p, StateChange.Removal);
-            return new DatabaseChangeResult(true, "");
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendPlayerUpdate(p, StateChange.Removal);
+                return new DatabaseChangeResult(true, "Success");
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
         }
-        return new DatabaseChangeResult(false, "Unknown error");
+        else {
+            return new DatabaseChangeResult(true, "Success");
+        }
     }
-    public DatabaseChangeResult ChangePlayer(Player p) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Not authorized");
-        }
+    public DatabaseChangeResult ChangePlayer(Player p, bool publishChange) {
+        
         if (playerList.ContainsKey(p.GetUniqueID()) == false) {
             Debug.LogError("Trying to modify player object that doesn't exist here!");
             return new DatabaseChangeResult(false, "Player doesn't exist");
@@ -172,22 +176,27 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             Debug.LogError("Trying to modify provider. This isn't supposed to happen.");
             return new DatabaseChangeResult(false, "Can't modify provider");
         }
-        playerList[p.GetUniqueID()] = p;
-        if (GetAuthorized()) {
-            SendPlayerUpdate(p, StateChange.Change);
-            return new DatabaseChangeResult(true, "");
+        playerList[p.GetUniqueID()].DeepCopyAndApply(p);
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendPlayerUpdate(p, StateChange.Change);
+                return new DatabaseChangeResult(true, "Success");
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
         }
-        return new DatabaseChangeResult(false, "Unknown error");
+        else {
+            return new DatabaseChangeResult(true, "Success");
+        }
     }
 
     //Object modification methods
-    public DatabaseChangeResult AddObject(MeshNetworkIdentity i) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Database change not authorized");
-        }
+    public DatabaseChangeResult AddObject(MeshNetworkIdentity i, bool publishChange) {
+        
         if (objectList.ContainsKey(i.GetObjectID())) {
-            Debug.LogError("Object already exists!");
+            Debug.Log("Skipping object that already exists");
             return new DatabaseChangeResult(false, "Object already exists");
         }
         if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
@@ -204,17 +213,22 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             }
         }
         objectList.Add(i.GetObjectID(), i);
-        if (GetAuthorized()) {
-            SendObjectUpdate(i, StateChange.Addition);
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendObjectUpdate(i, StateChange.Addition);
+                return new DatabaseChangeResult(true, i.GetObjectID());
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
+        }
+        else {
             return new DatabaseChangeResult(true, i.GetObjectID());
         }
-        return new DatabaseChangeResult(false, "Unknown error");
     }
-    public DatabaseChangeResult RemoveObject(MeshNetworkIdentity i) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Not authorized");
-        }
+    public DatabaseChangeResult RemoveObject(MeshNetworkIdentity i, bool publishChange) {
+        
         if (objectList.ContainsKey(i.GetObjectID()) == false) {
             return new DatabaseChangeResult(false, "Object does not exist");
         }
@@ -223,17 +237,23 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             return new DatabaseChangeResult(false, "Can't remove database.");
         }
         objectList.Remove(i.GetObjectID());
-        if (GetAuthorized()) {
-            SendObjectUpdate(i, StateChange.Removal);
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendObjectUpdate(i, StateChange.Removal);
+                return new DatabaseChangeResult(true, i.GetObjectID());
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
+        }
+        else {
             return new DatabaseChangeResult(true, i.GetObjectID());
         }
-        return new DatabaseChangeResult(false, "Unknown error");
+        
     }
-    public DatabaseChangeResult ChangeObject(MeshNetworkIdentity i) {
-        if (!GetAuthorized()) {
-            Debug.LogError("Database change not authorized.");
-            return new DatabaseChangeResult(false, "Not authorized");
-        }
+    public DatabaseChangeResult ChangeObject(MeshNetworkIdentity i, bool publishChange) {
+        
         if (objectList.ContainsKey(i.GetObjectID()) == false) {
             Debug.LogError("Object that was requested to be changed does not exist!");
             return new DatabaseChangeResult(false, "Object does not exist");
@@ -242,12 +262,20 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             Debug.LogError("Tried to change database. This action is prohibited."); //maybe not in the future...
             return new DatabaseChangeResult(false, "Can't change database");
         }
-        objectList[i.GetObjectID()] = i;
-        if (GetAuthorized()) {
-            SendObjectUpdate(i, StateChange.Change);
+        objectList[i.GetObjectID()].DeepCopyAndApply(i);
+        if (publishChange) {
+            if (GetAuthorized()) {
+                SendObjectUpdate(i, StateChange.Change);
+                return new DatabaseChangeResult(true, i.GetObjectID());
+            }
+            else {
+                Debug.LogError("Publishing changes not authorized.");
+                return new DatabaseChangeResult(false, "Publishing changes not authorized");
+            }
+        }
+        else {
             return new DatabaseChangeResult(true, i.GetObjectID());
         }
-        return new DatabaseChangeResult(false, "Unknown error");
     }
 
     //Checks if there is an object ID available for use, and returns it if there is one
@@ -302,7 +330,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         Dictionary<Player, StateChange> playerListDelta = new Dictionary<Player, StateChange>();
         Dictionary<MeshNetworkIdentity, StateChange> objectListDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
         playerListDelta.Add(p, s);
-        SendDelta(playerListDelta, objectListDelta, (ulong)ReservedPlayerIDs.Broadcast);
+        SendDelta(playerListDelta, objectListDelta, (ulong)ReservedPlayerIDs.Broadcast, false);
     }
     
     //Send delta containing an object
@@ -310,7 +338,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         Dictionary<Player, StateChange> playerListDelta = new Dictionary<Player, StateChange>();
         Dictionary<MeshNetworkIdentity, StateChange> objectListDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
         objectListDelta.Add(id, s);
-        SendDelta(playerListDelta, objectListDelta, (ulong)ReservedPlayerIDs.Broadcast);
+        SendDelta(playerListDelta, objectListDelta, (ulong)ReservedPlayerIDs.Broadcast, false);
     }
 
     
@@ -326,7 +354,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
             Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
             fakePlayerDelta.Add(p, StateChange.Change);
-            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0);
+            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
             foreach (byte cur_byte in data) {
@@ -340,7 +368,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
             Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
             fakeObjectDelta.Add(i, StateChange.Change);
-            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0);
+            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
             foreach (byte cur_byte in data) {
@@ -359,7 +387,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //Send delta update containing given player and object delta information
     //Formats packet to be sent to specified target ID (use ReservedPlayerIDs.Broadcast if necessary)
     //Will always include the database object and the database owner, even if not specified
-    private void SendDelta(Dictionary<Player, StateChange> playerUpdate, Dictionary<MeshNetworkIdentity, StateChange> objectUpdate, ulong targetPlayerID) {
+    private void SendDelta(Dictionary<Player, StateChange> playerUpdate, Dictionary<MeshNetworkIdentity, StateChange> objectUpdate, ulong targetPlayerID, bool isFullUpdate) {
         if(objectList.ContainsValue(GetIdentity()) == false ||
             playerList.ContainsKey(GetIdentity().GetOwnerID()) == false){
             Debug.Log("Trying to send delta when database is not yet fully set up. Skipping");
@@ -377,6 +405,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         
         //Check if the database is included in the delta
         bool flag = false;
+        
         foreach(MeshNetworkIdentity i in objectUpdate.Keys) {
             if(i.GetPrefabID() == GetIdentity().GetPrefabID()) {
                 flag = true;
@@ -384,7 +413,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
         //If not, add database to delta. (The database should always be included.)
         if (flag == false) {
-            objectUpdate[GetIdentity()] = StateChange.Addition;
+            objectUpdate.Add(GetIdentity(), StateChange.Addition);
         }
         //Check if the owner is included in the delta
         flag = false;
@@ -396,10 +425,10 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         //If not, add owner to delta. (The owner should always be included.)
         if (flag == false) {
             
-            playerUpdate[playerList[GetIdentity().GetOwnerID()]] = StateChange.Addition;
+            playerUpdate.Add(playerList[GetIdentity().GetOwnerID()], StateChange.Addition);
         }
         ushort hash = GenerateDatabaseChecksum(playerList, objectList);
-        DatabaseUpdate update = new DatabaseUpdate(playerUpdate, objectUpdate, hash);
+        DatabaseUpdate update = new DatabaseUpdate(playerUpdate, objectUpdate, hash, isFullUpdate);
         p.SetContents(update.GetSerializedBytes());
         GetIdentity().RoutePacket(p);
     }
@@ -407,7 +436,16 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     public void ReceivePacket(MeshPacket p) {
         if(p.GetPacketType() == PacketType.DatabaseUpdate) {
             if(p.GetSourcePlayerId() == GetIdentity().GetOwnerID()) { //if the sender is authorized to make changes
-                ReceiveUpdate(DatabaseUpdate.ParseContentAsDatabaseUpdate(p.GetContents()));
+                DatabaseUpdate dbup = DatabaseUpdate.ParseContentAsDatabaseUpdate(p.GetContents());
+                if (dbup.isFullUpdate == false) {
+                    ReceiveDeltaUpdate(dbup);
+                }
+                else {
+                    ReceiveFullUpdate(dbup);
+                }
+            }
+            else {
+                Debug.LogError("Got a DatabaseUpdate from somebody not authorized! Weird!");
             }
         }else if(p.GetPacketType() == PacketType.FullUpdateRequest){
             SendFullUpdate(p.GetSourcePlayerId());
@@ -428,13 +466,13 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         foreach(MeshNetworkIdentity i in objectList.Values) {
             objectUpdate[i] = StateChange.Override;
         }
-        SendDelta(playerUpdate, objectUpdate, sourceID); //This should contain the database, so the delta algorithm shouldn't add it in
+        SendDelta(playerUpdate, objectUpdate, sourceID, true); //This should contain the database, so the delta algorithm shouldn't add it in
     }
 
     
     //This is called when the authorized database sends an update to this database.
     //If this object is the authorized database, this should never be called.
-    public void ReceiveUpdate(DatabaseUpdate dbup) {
+    public void ReceiveDeltaUpdate(DatabaseUpdate dbup) {
         Debug.Log("RecieveUpdate: " + dbup.objectDelta.Count + " objects and " + dbup.playerDelta.Count + " players.");
 
         //TODO: Write safe methods for local addition/deletion etc
@@ -442,11 +480,11 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         //TODO: Refactor "override" full update system so that omissions are meaningful
         foreach (Player p in dbup.playerDelta.Keys) {
             if (dbup.playerDelta[p] == StateChange.Addition) {
-                playerList.Add(p.GetUniqueID(), p);
+                AddPlayer(p, false);
             } else if (dbup.playerDelta[p] == StateChange.Removal) {
-                playerList.Remove(p.GetUniqueID());
+                RemovePlayer(p, false);
             } else if (dbup.playerDelta[p] == StateChange.Change) {
-                playerList[p.GetUniqueID()] = p;
+                playerList[p.GetUniqueID()].DeepCopyAndApply(p);
             } else if (dbup.playerDelta[p] == StateChange.Override) { //Probably coming from a FullUpdate
                 playerList.Remove(p.GetUniqueID());
                 playerList.Add(p.GetUniqueID(), p);
@@ -491,7 +529,34 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
     }
 
+    public void ReceiveFullUpdate(DatabaseUpdate dbup) {
+        if(dbup.isFullUpdate == false) {
+            Debug.LogError("Trying to parse delta update as full update");
+            return;
+        }
+        Dictionary<ushort, MeshNetworkIdentity> dbupObjectHashTable = new Dictionary<ushort, MeshNetworkIdentity>();
+        foreach(MeshNetworkIdentity i in dbup.objectDelta.Keys) {
+            dbupObjectHashTable.Add(i.GetObjectID(), i);
+        }
+        foreach(ushort localObjectID in objectList.Keys) { //iterate through all local objects
+            if (dbupObjectHashTable.ContainsKey(localObjectID)) {
+                //if they are the same prefab, keep the object, but update the info
+                if(dbupObjectHashTable[localObjectID].GetPrefabID() == LookupObject(localObjectID).GetPrefabID()) {
+                    LookupObject(localObjectID).DeepCopyAndApply(dbupObjectHashTable[localObjectID]);
+                }
+                else { //if they are different prefabs, something seriously screwy happened and we need to nuke the local object
+                    RemoveObject(LookupObject(localObjectID), false); //the order of these commands is very important
+                    game.RemoveObject(localObjectID);
+                    AddObject(dbupObjectHashTable[localObjectID], false);
+                    game.SpawnObject(localObjectID);
+                }
+            }
+            else {
+                RemoveObject(LookupObject(localObjectID), false); //If we have it and the fullUpdate doesn't, nuke it!
+            }
 
+        }
+    }
 
     /*
         Users SHOULD be able to:
@@ -524,7 +589,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 Debug.LogError("Requested object creation tries to assign to new player: prohibited");
                 return;
             }
-            DatabaseChangeResult result = AddObject(transaction.GetObjectData());
+            DatabaseChangeResult result = AddObject(transaction.GetObjectData(), true);
             if(result.success == false) {
                 Debug.LogError("Requested object addition failed: " + result.error);
                 return;
@@ -543,7 +608,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             if(localObjectToRemove == null) {
                 Debug.LogError("Couldn't find the object requested to be removed.");
             }
-            DatabaseChangeResult result = RemoveObject(LookupObject(transaction.GetObjectData().GetObjectID()));
+            DatabaseChangeResult result = RemoveObject(LookupObject(transaction.GetObjectData().GetObjectID()), true);
             if(result.success == false) {
                 Debug.LogError("Requested object removal failed: " + result.error);
                 return;
