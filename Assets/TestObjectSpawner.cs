@@ -24,16 +24,20 @@ public class TestObjectSpawner : MonoBehaviour {
             }
             StartCoroutine(SpawnCapsule());
         }
+        if (Input.GetKeyDown(KeyCode.Backspace)) {
+            Testing.ProfileSerialization();
+        }
 	}
+    
 
     IEnumerator SpawnCapsule() {
         float timeStart = Time.time;
         MeshNetworkIdentity requestedID = new MeshNetworkIdentity(0, 2, meshnet.GetSteamID(), false);
-        ushort returnedObjectID = (ushort)ReservedObjectIDs.Unspecified;
+        IDContainer returnedObjectID = new IDContainer((ushort)ReservedObjectIDs.Unspecified);
         Debug.Log("Asking scheduler to make spawn request");
         scheduler.ScheduleChange(requestedID, StateChange.Addition, ref returnedObjectID);
 
-        while(returnedObjectID == (ushort)ReservedObjectIDs.Unspecified) {
+        while(returnedObjectID.id == (ushort)ReservedObjectIDs.Unspecified) {
             if(Time.time - timeStart > SPAWN_TIMEOUT) {
                 Debug.LogError("Spawn timeout");
                 yield break;
@@ -41,9 +45,14 @@ public class TestObjectSpawner : MonoBehaviour {
             yield return new WaitForEndOfFrame();
         }
 
-        MeshNetworkIdentity newIdentity = meshnet.database.LookupObject(returnedObjectID);
+        MeshNetworkIdentity newIdentity = meshnet.database.LookupObject(returnedObjectID.id);
         Debug.Log("Prefab ids match: " + (requestedID.GetPrefabID() == newIdentity.GetPrefabID()));
         Debug.Log("Owner ids match: " + (requestedID.GetOwnerID() == newIdentity.GetOwnerID()));
+
+
+
+        yield break; //temp
+        /*
         yield return new WaitForSeconds(1);
 
         timeStart = Time.time;
@@ -57,5 +66,22 @@ public class TestObjectSpawner : MonoBehaviour {
             yield return new WaitForEndOfFrame();
         }
         Debug.Log("Removal: objectIDS match: " + (returnedObjectID == newIdentity.GetObjectID()));
+        */
+    }
+}
+
+class JitterTest{
+    public void PrePreJitMe() {
+        for(int i = 0; i < 1000; i++) {
+            PreJitMe();
+        }
+    }
+    public void PreJitMe() {
+        List<int> l = new List<int>(1);
+        ulong a = 0;
+        for (int i = 1; i < 100000; i++) {
+            l.Add(i);
+        }
+        
     }
 }

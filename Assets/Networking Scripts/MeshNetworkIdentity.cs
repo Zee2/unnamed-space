@@ -32,7 +32,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     /// 
     /// </summary>
 
-    public const int NETWORK_IDENTITY_BYTE_SIZE = 13;
+    public const int NETWORK_IDENTITY_BYTE_SIZE = 2+2+8+1;
 
     public MeshNetwork meshnetReference;
     ushort objectID;
@@ -58,9 +58,8 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
         this.ownerID = (ulong)ReservedPlayerIDs.Unspecified;
         this.locked = false;
     }
-
+    
     public void ReceivePacket(MeshPacket p) {
-        Debug.Log("ReceivePacket: This objectID = " + GetObjectID());
         if(attachedComponents.Count == 0) {
             Debug.Log("This MeshNetworkIdentity has no associated components! Forgot to populate it?");
         }
@@ -100,16 +99,13 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
 
 
     public byte[] GetSerializedBytes() {
-        List<byte> output = new List<byte>();
-        output.AddRange(BitConverter.GetBytes(objectID));
-        output.AddRange(BitConverter.GetBytes(prefabID));
-        output.AddRange(BitConverter.GetBytes(ownerID));
-        output.AddRange(BitConverter.GetBytes(locked));
-        if(output.ToArray().Length != NETWORK_IDENTITY_BYTE_SIZE) {
-            Debug.LogError("Something's wrong with the network identity serialization");
-            Debug.LogError("GetSerializedBytes returned " + output.ToArray().Length + "bytes");
-        }
-        return output.ToArray();
+        byte[] output = new byte[NETWORK_IDENTITY_BYTE_SIZE];
+        Buffer.BlockCopy(BitConverter.GetBytes(objectID), 0, output, 0, 2);
+        Buffer.BlockCopy(BitConverter.GetBytes(prefabID), 0, output, 2, 2);
+        Buffer.BlockCopy(BitConverter.GetBytes(ownerID), 0, output, 4, 8);
+        Buffer.BlockCopy(BitConverter.GetBytes(locked), 0, output, 12, 1);
+        
+        return output;
     }
     public void DeserializeAndApply(byte[] data) {
         objectID = BitConverter.ToUInt16(data, 0);

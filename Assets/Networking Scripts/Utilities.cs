@@ -103,6 +103,14 @@ namespace Utilities {
         }
     }
 
+    public class IDContainer {
+        public ushort id;
+
+        public IDContainer(ushort i) {
+            id = i;
+        }
+    }
+
 
 
     public struct DatabaseChangeResult {
@@ -130,6 +138,7 @@ namespace Utilities {
         use byte arrays for transmission across the network.
     */
     public class Player {
+        private static readonly Encoding encoding = new ASCIIEncoding();
         private string displayName;
         private ulong uniqueID;
         private string privateKey;
@@ -183,18 +192,16 @@ namespace Utilities {
         }
 
         public byte[] SerializeFull() {
-            byte[] result = Encoding.ASCII.GetBytes(GetNameSanitized() + ":"
-                + uniqueID + ":"
-                + privateKey);
-            return result;
+            string s = String.Join(":", new string[] { GetNameSanitized(), uniqueID.ToString(), privateKey });
+            
+            return encoding.GetBytes(s);
         }
 
         public static Player DeserializeFull(byte[] bytes) {
-            string s = Encoding.ASCII.GetString(bytes);
+            string s = encoding.GetString(bytes);
             string[] parts = s.Split(':');
-
-            Player p = new Player(parts[0], ulong.Parse(parts[1]), parts[2]);
-            return p;
+            
+            return new Player(parts[0], ulong.Parse(parts[1]), parts[2]);
         }
 
 
@@ -310,16 +317,21 @@ namespace Utilities {
         }
 
         public byte[] GetSerializedBytes() {
-            List<byte> output = new List<byte>();
+            int pointer = 0;
+            byte[] output = new byte[21 + contents.Length];
+            output[pointer] = (byte)type;
+            pointer++;
+            Buffer.BlockCopy(BitConverter.GetBytes(srcPlayerId), 0, output, pointer, 8);
+            pointer += 8;
+            Buffer.BlockCopy(BitConverter.GetBytes(targetPlayerId), 0, output, pointer, 8);
+            pointer += 8;
+            Buffer.BlockCopy(BitConverter.GetBytes(srcObjectId), 0, output, pointer, 2);
+            pointer += 2;
+            Buffer.BlockCopy(BitConverter.GetBytes(targetObjectId), 0, output, pointer, 2);
+            pointer += 2;
+            Buffer.BlockCopy(contents, 0, output, pointer, contents.Length);
 
-            output.Add((byte)type);
-            output.AddRange(BitConverter.GetBytes(srcPlayerId));
-            output.AddRange(BitConverter.GetBytes(targetPlayerId));
-            output.AddRange(BitConverter.GetBytes(srcObjectId));
-            output.AddRange(BitConverter.GetBytes(targetObjectId));
-            output.AddRange(contents);
-
-            return output.ToArray();
+            return output;
         }
 
 
@@ -385,36 +397,53 @@ namespace Utilities {
         //Serialize the update into a bytestream, recursively serializing all
         //contained objects and players.
         public byte[] GetSerializedBytes() {
-            List<byte> output = new List<byte>();
+            if (isFullUpdate) {
+                //Debug.Log("!!!! Just serialized a full update!");
 
+            }
+
+            
+            List<byte> output = new List<byte>(100);
 
             byte numPlayers = (byte)playerDelta.Keys.Count;
             output.Add(numPlayers);
-            foreach (Player p in playerDelta.Keys) {
-                byte[] serializedPlayer = p.SerializeFull();
+            
+            foreach (KeyValuePair<Player, StateChange> entry in playerDelta) {
+                
+                byte[] serializedPlayer = entry.Key.SerializeFull();
                 output.Add((byte)serializedPlayer.Length);
                 output.AddRange(serializedPlayer);
-                output.Add((byte)playerDelta[p]);
+                output.Add((byte)entry.Value);
+                
             }
+            
             byte numObjects = (byte)objectDelta.Keys.Count;
             output.Add(numObjects);
-            foreach (MeshNetworkIdentity m in objectDelta.Keys) {
-                byte[] serializedObject = m.GetSerializedBytes();
+            
+            foreach (KeyValuePair<MeshNetworkIdentity, StateChange> entry in objectDelta) {
+                
+                byte[] serializedObject = entry.Key.GetSerializedBytes();
+                
+
                 output.AddRange(serializedObject);
-                output.Add((byte)objectDelta[m]);
+                output.Add((byte)entry.Value);
             }
+            
             output.AddRange(BitConverter.GetBytes(fullHash));
-            output.Add(BitConverter.GetBytes(isFullUpdate)[0]);
+            output.AddRange(BitConverter.GetBytes(isFullUpdate));
+            output.TrimExcess();
+            
+            
             return output.ToArray();
         }
 
         //Deserialize incoming byte data and construct a deserialized DatabaseUpdate
         //Note, this is static
         public static DatabaseUpdate ParseContentAsDatabaseUpdate(byte[] serializedData) {
-
+            
             Dictionary<Player, StateChange> playerList = new Dictionary<Player, StateChange>();
             Dictionary<MeshNetworkIdentity, StateChange> networkObjects = new Dictionary<MeshNetworkIdentity, StateChange>();
-
+            
             byte[] rawData = serializedData;
             byte numOfNewPlayers = rawData[0];
             int pointer = 1;
@@ -448,8 +477,10 @@ namespace Utilities {
                 j++;
             }
             ushort hash = BitConverter.ToUInt16(rawData, pointer);
-            pointer += 1;
+            pointer += 2;
             bool fullUpdateFlag = BitConverter.ToBoolean(rawData, pointer);
+            
+            
             return new DatabaseUpdate(playerList, networkObjects, hash, fullUpdateFlag);
         }
 
@@ -581,14 +612,14 @@ namespace Utilities {
         //TODO automate checking
         public static void DebugDatabaseSerialization() {
             Debug.Log("Creating player named Mary Jane.");
-            Player p1 = new Player("Mary Jananee", 2233443, "abcde");
+            Player p1 = new Player("Mary Janee", 2233443, "abcde");
             Debug.Log("Creating player named John Smith");
             Player p2 = new Player("John Smith", 52342342, "12345");
 
             DatabaseUpdate db = new DatabaseUpdate();
             db.playerDelta.Add(p1, StateChange.Addition);
             db.playerDelta.Add(p2, StateChange.Removal);
-
+            db.isFullUpdate = true;
 
             MeshNetworkIdentity dummy1 = new MeshNetworkIdentity();
             MeshNetworkIdentity dummy2 = new MeshNetworkIdentity();
@@ -631,7 +662,7 @@ namespace Utilities {
             Debug.Log("Payload length: " + received.GetContents().Length);
 
             DatabaseUpdate receivedDB = DatabaseUpdate.ParseContentAsDatabaseUpdate(received.GetContents());
-            Debug.Log("Received DatabaseUpdate:");
+            Debug.Log("Received DatabaseUpdate: isfullupdate = " + receivedDB.isFullUpdate);
             //Debug.Log("Database hash: " + NetworkDatabase.GenerateDatabaseChecksum(db.playerDelta, db.objectDelta));
             Debug.Log("Total number of objects: " + receivedDB.objectDelta.Count);
             int i = 1;
@@ -653,6 +684,44 @@ namespace Utilities {
                 Debug.Log("privateKey: " + player.GetPrivateKey());
                 i++;
             }
+        }
+
+        public static void ProfileSerialization() {
+            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
+            
+            
+            DatabaseUpdate db = new DatabaseUpdate();
+            for(int i = 0; i < 1; i++) {
+                db.playerDelta.Add(new Player("PLAYERNAME", (ulong)i, "key"), StateChange.Addition);
+            }
+            db.isFullUpdate = true;
+
+           
+            for(int i = 0; i < 1; i++) {
+                db.objectDelta.Add(new MeshNetworkIdentity((ushort)i, 20, 40, true), StateChange.Addition);
+            }
+            
+            //Debug.Log("Database hash: " + NetworkDatabase.GenerateDatabaseChecksum(db.playerDelta, db.objectDelta));
+            MeshPacket p = new MeshPacket();
+            p.SetPacketType(PacketType.DatabaseUpdate);
+            p.SetSourceObjectId((byte)ReservedObjectIDs.DatabaseObject);
+            p.SetSourcePlayerId(120);
+            p.SetTargetObjectId((byte)ReservedObjectIDs.DatabaseObject);
+            p.SetTargetPlayerId((byte)ReservedPlayerIDs.Broadcast);
+
+            stopwatch.Start();
+            p.SetContents(db.GetSerializedBytes());
+            stopwatch.Stop();
+            byte[] transmitData = p.GetSerializedBytes();
+
+
+            //THIS WOULD GET SENT ACROSS THE NETWORK
+            
+            MeshPacket received = new MeshPacket(transmitData);
+            
+            DatabaseUpdate receivedDB = DatabaseUpdate.ParseContentAsDatabaseUpdate(received.GetContents());
+            Debug.logger.logEnabled = true;
+            Debug.Log("Testing: " + stopwatch.Elapsed.TotalMilliseconds);
         }
 
         public static void BitTesting() {
@@ -684,6 +753,8 @@ namespace Utilities {
             Debug.Log("Owner id: " + destTransaction.GetObjectData().GetOwnerID());
 
         }
+
+        
     }
 
 

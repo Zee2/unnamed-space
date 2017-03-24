@@ -1,6 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Runtime.CompilerServices;
+using System.Runtime;
+using System;
+using System.Reflection;
 using Steamworks;
 using Utilities;
 
@@ -40,12 +44,40 @@ public class MeshNetwork : MonoBehaviour {
     Callback<P2PSessionRequest_t> m_NewUserSession;
     Callback<LobbyChatUpdate_t> m_ChatUpdate;
     void Start() {
-
+        Debug.logger.logEnabled = true;
         DontDestroyOnLoad(gameObject);
+        
+        Debug.logger.logEnabled = true;
+        
+        foreach (var method in typeof(DatabaseUpdate).GetMethods()) {
+            //Debug.Log("Method: " + method.Name);
+            method.MethodHandle.GetFunctionPointer();
+        }
+        foreach (var method in typeof(MeshNetworkIdentity).GetMethods()) {
+            //Debug.Log("Method: " + method.Name);
+            method.MethodHandle.GetFunctionPointer();
+        }
+        foreach (var method in typeof(Player).GetMethods()) {
+            //Debug.Log("Method: " + method.Name);
+            method.MethodHandle.GetFunctionPointer();
+        }
+        foreach (var method in typeof(String).GetMethods()) {
+            //Debug.Log("Method: " + method.Name);
+            method.MethodHandle.GetFunctionPointer();
+        }
+        foreach (var method in typeof(MeshPacket).GetMethods()) {
+            //Debug.Log("Method: " + method.Name);
+            method.MethodHandle.GetFunctionPointer();
+        }
 
+        typeof(NetworkDatabase).GetMethod("GenerateDatabaseChecksum").MethodHandle.GetFunctionPointer();
+        Player p = new Player("hello", 123, "abc");
+        //System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(System.RuntimeMethodHandle
         //Testing.DebugDatabaseSerialization();
         //Testing.BitTesting();
         //Testing.TransactionTesting();
+        p.SerializeFull();
+        
         networkUIController = gameObject.GetComponent<UIController>();
 
         
@@ -63,16 +95,11 @@ public class MeshNetwork : MonoBehaviour {
         else {
             Debug.LogError("SteamManager not initialized!");
         }
+        //WarmupHosting();
 
-        Dictionary<int, float> test = new Dictionary<int, float>();
-        test.Add(5, 3.5f);
-        float[] arr = new float[1];
-        test.Values.CopyTo(arr, 0);
-        
     }
 
     protected void OnSessionRequest(P2PSessionRequest_t pCallback) {
-        Debug.Log("Incoming session request");
         if (lobby.Equals(CSteamID.Nil)) {
             Debug.Log("User trying to send packet to us, and our lobby doesn't exist!");
             return;
@@ -85,7 +112,6 @@ public class MeshNetwork : MonoBehaviour {
         }
 
         if (flag) {
-            Debug.Log("Session request granted");
             SteamNetworking.AcceptP2PSessionWithUser(pCallback.m_steamIDRemote);
         }
     }
@@ -101,7 +127,6 @@ public class MeshNetwork : MonoBehaviour {
             return null;
         }
         p.SetName(name);
-        Debug.Log("Constructing player with name " + name);
         p.SetUniqueID(id.m_SteamID);
         p.SetPrivateKey("key");
         return p;
@@ -128,8 +153,23 @@ public class MeshNetwork : MonoBehaviour {
 
     #region Provider-oriented code
 
+    public void WarmupHosting() {
+        MeshNetworkIdentity databaseID = new MeshNetworkIdentity((ushort)ReservedObjectIDs.DatabaseObject,
+            (ushort)ReservedPrefabIDs.Database,
+            (ulong)GetSteamID(), true);
+
+        NetworkDatabase database2 = game.SpawnDatabase(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
+        Debug.Log("Registering database.");
+        database2.AddObject(databaseID, true); //Tells the database that it itself exists (funny)
+
+        //First, we get our own player object, and we make ourselves the provider.
+        Player me = ConstructPlayer(SteamUser.GetSteamID());
+        Debug.Log("Registering provider.");
+        database.AddPlayer(me, true);
+    }
+
     public void HostGame() {
-        Debug.Log("Beginning game hosting");
+        
         if(lobby.Equals(CSteamID.Nil) == false) {
             Debug.LogError("Lobby already created. Probably already hosting. Must shut down hosting before doing it again.");
             return;
@@ -142,16 +182,17 @@ public class MeshNetwork : MonoBehaviour {
         
         database = game.SpawnDatabase(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
         Debug.Log("Registering database.");
-        database.AddObject(databaseID); //Tells the database that it itself exists (funny)
+        database.AddObject(databaseID, true); //Tells the database that it itself exists (funny)
         
         //First, we get our own player object, and we make ourselves the provider.
         Player me = ConstructPlayer(SteamUser.GetSteamID());
         Debug.Log("Registering provider.");
-        database.AddPlayer(me);
+        database.AddPlayer(me, true);
 
         //Actually create the lobby. Password info, etc, will be set after this.
         Debug.Log("Creating Lobby");
         m_LobbyCreated.Set(SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePrivate, 4));
+        
     }
     public void OnCreateLobby(LobbyCreated_t pCallback, bool bIOFailure) {
         if(pCallback.m_eResult != EResult.k_EResultOK) {
@@ -166,7 +207,6 @@ public class MeshNetwork : MonoBehaviour {
         networkUIController.RequestHostingInfo(OnGetHostingInfo);
     }
     public void OnGetHostingInfo(GamePublishingInfo info) {
-        Debug.Log("Received hosting information!");
         //Set basic info
         SteamMatchmaking.SetLobbyData(lobby, "name", info.name);
         SteamMatchmaking.SetLobbyData(lobby, "pwd", info.password);
@@ -212,7 +252,7 @@ public class MeshNetwork : MonoBehaviour {
         for(int i = 0; i < numLobbies; i++) {
             lobbies[i].id = SteamMatchmaking.GetLobbyByIndex(i).m_SteamID;
             lobbies[i].name = SteamMatchmaking.GetLobbyData(new CSteamID(lobbies[i].id), "name");
-            Debug.Log("Name of lobby:" + lobbies[i].name);
+            
             lobbies[i].callback = OnGetLobbySelection;
         }
         networkUIController.RequestLobbySelection(OnGetLobbySelection, lobbies);
@@ -253,7 +293,6 @@ public class MeshNetwork : MonoBehaviour {
 
     protected void RegisterWithProvider() {
         networkUIController.SetUIMode(UIMode.Connecting);
-        Debug.Log("Registering with provider.");
 
         //Create a PlayerJoin packet, which the provider will use as a trigger to
         //register a new player. It will update its internal database, and will
@@ -280,8 +319,6 @@ public class MeshNetwork : MonoBehaviour {
         }
 
         DatabaseUpdate u = DatabaseUpdate.ParseContentAsDatabaseUpdate(p.GetContents());
-        Debug.Log("Number of incoming players: " + u.playerDelta.Count);
-        Debug.Log("Number of incoming objects: " + u.objectDelta.Count);
         //Here, we construct the database shadow using the database update.
         bool flagHasFoundDatabase = false;
         MeshNetworkIdentity databaseID = null;

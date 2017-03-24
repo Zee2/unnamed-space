@@ -61,12 +61,14 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     //Hunt down some relevant gameobjects to keep track of
     public void OnEnable() {
+        
+        
         GameObject debug = GameObject.FindGameObjectWithTag("DatabaseDebug");
         if(debug != null) {
             UnityEngine.UI.Text t = debug.GetComponent<UnityEngine.UI.Text>();
             if(t != null) {
                 debugText = t;
-                Debug.Log("Succesfully set debug text");
+                //Debug.Log("Succesfully set debug text");
             }
             else {
                 Debug.Log("Couldn't find text component");
@@ -75,18 +77,22 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         else {
             Debug.Log("Couldn't find debug text.");
         }
+        
+        
+        
         GameObject foundGameCoord = GameObject.FindGameObjectWithTag("NetworkArchitecture");
         if (foundGameCoord != null) {
             GameCoordinator g = foundGameCoord.GetComponent<GameCoordinator>();
             if (g != null) {
                 game = g;
-                Debug.Log("Successfully found game coordinator");
+                //Debug.Log("Successfully found game coordinator");
             } else {
                 Debug.Log("Couldn't find GameCoordinator component");
             }
         } else {
             Debug.Log("Couldn't find network architecture.");
         }
+        
     }
 
     //If we have debug readout, update the readout
@@ -117,7 +123,6 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         
         
         if (playerList.ContainsKey(p.GetUniqueID())) {
-            Debug.Log("Skipping user that already exists");
             return new DatabaseChangeResult(false, "Player already exists");
         }
         if (p.GetUniqueID() == GetIdentity().GetOwnerID() && p.GetUniqueID() != (ulong)ReservedPlayerIDs.Unspecified) {
@@ -194,13 +199,10 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     //Object modification methods
     public DatabaseChangeResult AddObject(MeshNetworkIdentity i, bool publishChange) {
-        
         if (objectList.ContainsKey(i.GetObjectID())) {
-            Debug.Log("Skipping object that already exists");
             return new DatabaseChangeResult(false, "Object already exists");
         }
         if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
-            Debug.Log("Warning: creating database object. This should only happen once!");
         }
         
         //If the object isn't the database, we need to assign an available objectID
@@ -350,30 +352,30 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
         ushort hash = 0x0;
 
-        foreach(Player p in players.Values) {
+        foreach(KeyValuePair<ulong, Player> entry in players) {
             Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
             Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
-            fakePlayerDelta.Add(p, StateChange.Change);
+            fakePlayerDelta.Add(entry.Value, StateChange.Change);
             DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
-            foreach (byte cur_byte in data) {
+            for (int j = 0; j < data.Length; j++) {
                 checksum = (ushort)(((checksum & 0xFFFF) >> 1) + ((checksum & 0x1) << 15)); // Rotate the accumulator
-                checksum = (ushort)((checksum + cur_byte) & 0xFFFF);                        // Add the next chunk
+                checksum = (ushort)((checksum + data[j]) & 0xFFFF);                        // Add the next chunk
             }
 
             hash = (ushort)(hash ^ checksum);
         }
-        foreach (MeshNetworkIdentity i in objects.Values) {
+        foreach (KeyValuePair<ushort, MeshNetworkIdentity> entry in objects) {
             Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
             Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
-            fakeObjectDelta.Add(i, StateChange.Change);
+            fakeObjectDelta.Add(entry.Value, StateChange.Change);
             DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
-            foreach (byte cur_byte in data) {
+            for (int j = 0; j < data.Length; j++) {
                 checksum = (ushort)(((checksum & 0xFFFF) >> 1) + ((checksum & 0x1) << 15)); // Rotate the accumulator
-                checksum = (ushort)((checksum + cur_byte) & 0xFFFF);                        // Add the next chunk
+                checksum = (ushort)((checksum + data[j]) & 0xFFFF);                        // Add the next chunk
             }
 
             hash = (ushort)(hash ^ checksum);
@@ -388,7 +390,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //Formats packet to be sent to specified target ID (use ReservedPlayerIDs.Broadcast if necessary)
     //Will always include the database object and the database owner, even if not specified
     private void SendDelta(Dictionary<Player, StateChange> playerUpdate, Dictionary<MeshNetworkIdentity, StateChange> objectUpdate, ulong targetPlayerID, bool isFullUpdate) {
-        if(objectList.ContainsValue(GetIdentity()) == false ||
+        if(objectList.ContainsKey(GetIdentity().GetObjectID()) == false ||
             playerList.ContainsKey(GetIdentity().GetOwnerID()) == false){
             Debug.Log("Trying to send delta when database is not yet fully set up. Skipping");
             return;
@@ -437,6 +439,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         if(p.GetPacketType() == PacketType.DatabaseUpdate) {
             if(p.GetSourcePlayerId() == GetIdentity().GetOwnerID()) { //if the sender is authorized to make changes
                 DatabaseUpdate dbup = DatabaseUpdate.ParseContentAsDatabaseUpdate(p.GetContents());
+                
                 if (dbup.isFullUpdate == false) {
                     ReceiveDeltaUpdate(dbup);
                 }
@@ -473,8 +476,6 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //This is called when the authorized database sends an update to this database.
     //If this object is the authorized database, this should never be called.
     public void ReceiveDeltaUpdate(DatabaseUpdate dbup) {
-        Debug.Log("RecieveUpdate: " + dbup.objectDelta.Count + " objects and " + dbup.playerDelta.Count + " players.");
-
         //TODO: Write safe methods for local addition/deletion etc
         //TODO: Make sure that network and local references are not confused (StateChange.Change)
         //TODO: Refactor "override" full update system so that omissions are meaningful
@@ -486,8 +487,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             } else if (dbup.playerDelta[p] == StateChange.Change) {
                 playerList[p.GetUniqueID()].DeepCopyAndApply(p);
             } else if (dbup.playerDelta[p] == StateChange.Override) { //Probably coming from a FullUpdate
-                playerList.Remove(p.GetUniqueID());
-                playerList.Add(p.GetUniqueID(), p);
+                Debug.LogError("Received an override update inside a delta update");
             }
         }
         foreach (MeshNetworkIdentity i in dbup.objectDelta.Keys) {
@@ -497,21 +497,27 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 //(because this script is running off of the already created database!)
                 //We only want to create a recursive link.
                 if(i.GetObjectID() == (ushort)ReservedObjectIDs.DatabaseObject) {
-                    objectList.Add((ushort)ReservedObjectIDs.DatabaseObject, GetIdentity()); //IMPORTANT: Create recursive pointer
+                    DatabaseChangeResult result = AddObject(GetIdentity(), false);
+                    if (result.success) {
+                        Debug.Log("Successfully added database to database: recursive link achieved");
+                    }
                 }else {
-                    objectList.Add(i.GetObjectID(), i);
-                    game.SpawnObject(i.GetObjectID());
+                    DatabaseChangeResult result = AddObject(i, false);
+                    if (result.success) {
+                        game.SpawnObject(i.GetObjectID());
+                    }
                 }
             }
             else if (dbup.objectDelta[i] == StateChange.Removal) {
-                objectList.Remove(i.GetObjectID());
-                game.RemoveObject(i.GetObjectID());
+                DatabaseChangeResult result = RemoveObject(i, false);
+                if (result.success) {
+                    game.RemoveObject(i.GetObjectID());
+                }
             }
             else if (dbup.objectDelta[i] == StateChange.Change) {
-                objectList[i.GetObjectID()] = i;
+                objectList[i.GetObjectID()].DeepCopyAndApply(i);
             } else if (dbup.objectDelta[i] == StateChange.Override) { //Probably coming from a FullUpdate
-                objectList.Remove(i.GetObjectID());
-                objectList.Add(i.GetObjectID(), i);
+                Debug.LogError("Received an override update inside a delta update");
             }
         }
 
@@ -525,7 +531,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 GetIdentity().GetObjectID());
             GetIdentity().RoutePacket(p);
         }else {
-            Debug.Log("Delta successful, hash matches");
+            //Debug.Log("Delta successful, hash matches");
         }
     }
 
@@ -540,6 +546,9 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         }
         foreach(ushort localObjectID in objectList.Keys) { //iterate through all local objects
             if (dbupObjectHashTable.ContainsKey(localObjectID)) {
+
+
+
                 //if they are the same prefab, keep the object, but update the info
                 if(dbupObjectHashTable[localObjectID].GetPrefabID() == LookupObject(localObjectID).GetPrefabID()) {
                     LookupObject(localObjectID).DeepCopyAndApply(dbupObjectHashTable[localObjectID]);
@@ -549,10 +558,19 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                     game.RemoveObject(localObjectID);
                     AddObject(dbupObjectHashTable[localObjectID], false);
                     game.SpawnObject(localObjectID);
+                    //this will probably break some gameplay stuff
+                    //so this probably shouldn't happen very often
                 }
+
+                dbupObjectHashTable.Remove(localObjectID); //check this one off our list
             }
             else {
                 RemoveObject(LookupObject(localObjectID), false); //If we have it and the fullUpdate doesn't, nuke it!
+            }
+            //Now, only the objects that we don't have yet are left in the databaseupdate
+            //Debug.Log(dbupObjectHashTable.Keys.Count + " items included in fullUpdate that we don't currently have. Now adding them");
+            foreach(MeshNetworkIdentity i in dbupObjectHashTable.Values) {
+                AddObject(i, false); //add the ones we should have
             }
 
         }
@@ -595,6 +613,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 return;
             }
             else {
+                game.SpawnObject(result.data);
                 EchoChangeRequest(transaction.GetTransactionID(), result.data, p.GetSourcePlayerId());
             }
             
@@ -614,6 +633,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 return;
             }
             else {
+                game.RemoveObject(result.data);
                 EchoChangeRequest(transaction.GetTransactionID(), localObjectToRemove.GetObjectID(), p.GetSourcePlayerId());
             }
         }

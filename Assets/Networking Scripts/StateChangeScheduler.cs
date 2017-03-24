@@ -11,7 +11,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     MeshNetworkIdentity thisObjectIdentity;
 
-    Dictionary<ushort, ushort> callbackRegistry = new Dictionary<ushort, ushort>();
+    Dictionary<ushort, IDContainer> callbackRegistry = new Dictionary<ushort, IDContainer>();
     Dictionary<float, ushort> callbackTimers = new Dictionary<float, ushort>();
     float lastTimerCheck = 0;
     NetworkDatabase netDB;
@@ -49,7 +49,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 Debug.LogError("User that does not own the database is trying to give us echoes");
                 return;
             }
-
+            Debug.Log("Receiving Echo!");
             StateChangeEcho echo;
             echo = StateChangeEcho.ParseSerializedBytes(p.GetContents());
             
@@ -57,7 +57,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 Debug.LogError("Echoed transaction ID is not present in transaction registry");
                 return;
             }
-            callbackRegistry[echo.GetTransactionID()] = echo.GetObjectID(); //fulfill reference population, should trigger the waiting coroutine
+            callbackRegistry[echo.GetTransactionID()].id = echo.GetObjectID(); //fulfill reference population, should trigger the waiting coroutine
             callbackRegistry.Remove(echo.GetTransactionID());
             callbackTimers.Remove(echo.GetTransactionID());
         }
@@ -72,7 +72,8 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         return 0;
     }
 
-    public bool ScheduleChange(MeshNetworkIdentity id, StateChange change, ref ushort callbackObjectID) {
+    public bool ScheduleChange(MeshNetworkIdentity id, StateChange change, ref IDContainer idReference) {
+        
         if(GetIdentity().meshnetReference.database == null) {
             Debug.LogError("Can't schedule a state change without an active database");
             return false;
@@ -83,7 +84,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             Debug.LogError("State change scheduler ran out of available transaction IDs");
             return false;
         }
-        callbackRegistry.Add(transactionID, callbackObjectID);
+        callbackRegistry.Add(transactionID, idReference);
         callbackTimers.Add(Time.time, transactionID);
         StateChangeTransaction transaction = new StateChangeTransaction(transactionID, change, id);
         MeshPacket p = new MeshPacket();
@@ -95,14 +96,10 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         p.SetTargetPlayerId(netDB.GetIdentity().GetOwnerID());
         Debug.Log("Scheduler sending packet: target player ID = " + p.GetTargetPlayerId() + ", target object ID = " + p.GetTargetObjectId());
 
-
-        if (GetIdentity().IsLocallyOwned()) { //If we own the database, we can't send packets (they will be rejected)
-            GetIdentity().ReceivePacket(p); //Redirect packet to our own identity
-            return true;
-        } else {
-            GetIdentity().RoutePacket(p);
-            return true;
-        }
+        GetIdentity().RoutePacket(p);
+        return true;
+        
         
     }
+    
 }
