@@ -632,6 +632,7 @@ namespace Utilities {
 
             db.objectDelta.Add(dummy1, StateChange.Change);
             db.objectDelta.Add(dummy2, StateChange.Addition);
+            db.fullHash = 4321;
 
             Debug.Log("Total payload length: " + db.GetSerializedBytes().Length);
             //Debug.Log("Database hash: " + NetworkDatabase.GenerateDatabaseChecksum(db.playerDelta, db.objectDelta));
@@ -660,9 +661,11 @@ namespace Utilities {
             Debug.Log("targetObjectID: " + received.GetTargetObjectId());
             Debug.Log("targetPlayerID: " + received.GetTargetPlayerId());
             Debug.Log("Payload length: " + received.GetContents().Length);
+            
 
             DatabaseUpdate receivedDB = DatabaseUpdate.ParseContentAsDatabaseUpdate(received.GetContents());
             Debug.Log("Received DatabaseUpdate: isfullupdate = " + receivedDB.isFullUpdate);
+            Debug.Log("Hash = " + receivedDB.fullHash);
             //Debug.Log("Database hash: " + NetworkDatabase.GenerateDatabaseChecksum(db.playerDelta, db.objectDelta));
             Debug.Log("Total number of objects: " + receivedDB.objectDelta.Count);
             int i = 1;

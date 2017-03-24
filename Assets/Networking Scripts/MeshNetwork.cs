@@ -73,9 +73,10 @@ public class MeshNetwork : MonoBehaviour {
         typeof(NetworkDatabase).GetMethod("GenerateDatabaseChecksum").MethodHandle.GetFunctionPointer();
         Player p = new Player("hello", 123, "abc");
         //System.Runtime.CompilerServices.RuntimeHelpers.PrepareMethod(System.RuntimeMethodHandle
-        //Testing.DebugDatabaseSerialization();
+        Testing.DebugDatabaseSerialization();
         //Testing.BitTesting();
         //Testing.TransactionTesting();
+
         p.SerializeFull();
         
         networkUIController = gameObject.GetComponent<UIController>();
