@@ -120,12 +120,14 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     
     //Player modification methods
     public DatabaseChangeResult AddPlayer(Player p, bool publishChange) {
-        
-        
+
+        Debug.Log("Adding player named " + p.GetNameSanitized());
         if (playerList.ContainsKey(p.GetUniqueID())) {
             return new DatabaseChangeResult(false, "Player already exists");
         }
-        if (p.GetUniqueID() == GetIdentity().GetOwnerID() && p.GetUniqueID() != (ulong)ReservedPlayerIDs.Unspecified) {
+        if (p.GetUniqueID() == GetIdentity().GetOwnerID()
+            && p.GetUniqueID() != (ulong)ReservedPlayerIDs.Unspecified
+            && publishChange == true) {
             if (!GetAuthorized()) {
                 Debug.Log("Unauthorized user trying to override provider.");
                 return new DatabaseChangeResult(false, "Unauthorized agent overriding provider");
