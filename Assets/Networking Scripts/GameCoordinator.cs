@@ -27,18 +27,18 @@ public class GameCoordinator : MonoBehaviour {
         DontDestroyOnLoad(gameObject);
         meshnet = gameObject.GetComponent<MeshNetwork>();
         GameObject[] prefabs = Resources.LoadAll<GameObject>("NetworkPrefabs");
-        
-        foreach(GameObject prefab in prefabs) {
-            if(prefab.GetComponent<IdentityContainer>() == null) {
+
+        foreach (GameObject prefab in prefabs) {
+            if (prefab.GetComponent<IdentityContainer>() == null) {
                 Debug.LogError("A NetworkPrefab is missing an IdentityContainer.");
             }
-            else{
+            else {
                 string prefabID = prefab.name.Substring(prefab.name.LastIndexOf('_') + 1);
                 networkPrefabs.Add(ushort.Parse(prefabID), prefab);
+
             }
+
         }
-
-
         Debug.Log("GameCoordinator tried to register " + prefabs.Length + " network prefabs, succeeded with " + networkPrefabs.Count + ".");
         
     }

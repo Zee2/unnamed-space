@@ -266,7 +266,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         outgoingUpdate.isKinematic = isKinematic;
         outgoingUpdate.position = position;
         outgoingUpdate.velocity = velocity;
-        outgoingUpdate.acceleration = acceleration;
+        //outgoingUpdate.acceleration = acceleration;
         outgoingUpdate.rotation = rotation;
         outgoingUpdate.rotationalVelocity = rotationalVelocity;
 
