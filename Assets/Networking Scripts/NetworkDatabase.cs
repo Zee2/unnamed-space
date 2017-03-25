@@ -32,8 +32,8 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     */
 
     public const ushort OBJECT_ID_MIN = 10;
-    public const ushort OBJECT_ID_MAX = 65500;
-
+    public const ushort OBJECT_ID_MAX = 100;
+    ushort lastObjectIDAssigned = OBJECT_ID_MIN;
     
 
     public bool UseFullUpdates = false; //Should the network database send the entire database every time something changes?
@@ -106,7 +106,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             }
             s += "\nObjects: ";
             foreach (MeshNetworkIdentity i in objectList.Values) {
-                s += i.GetPrefabID() + ":" + i.GetOwnerID();
+                s += i.GetPrefabID() + ":" + i.GetObjectID();
                 s += "\n";
             }
             debugText.text = s;
@@ -120,8 +120,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     
     //Player modification methods
     public DatabaseChangeResult AddPlayer(Player p, bool publishChange) {
-
-        Debug.Log("Adding player named " + p.GetNameSanitized());
+        
         if (playerList.ContainsKey(p.GetUniqueID())) {
             return new DatabaseChangeResult(false, "Player already exists");
         }
@@ -284,13 +283,27 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     //Checks if there is an object ID available for use, and returns it if there is one
     public IDAssignmentResult GetAvailableObjectID() {
-        for(ushort u = OBJECT_ID_MIN; u <= OBJECT_ID_MAX; u++) {
-            if(objectList.ContainsKey(u) == false) {
+        int counter = 0;
+        ushort u = (ushort)(lastObjectIDAssigned+1);
+        while(true) {
+            if (counter > OBJECT_ID_MAX + 100) {
+                break;
+            }
+            
+            if (u > OBJECT_ID_MAX) {
+                u = OBJECT_ID_MIN;
+            }
+            if (objectList.ContainsKey(u) == false) {
+                lastObjectIDAssigned = u;
                 IDAssignmentResult positiveResult;
                 positiveResult.id = u;
                 positiveResult.success = true;
                 return positiveResult;
             }
+            u++;
+            
+            
+            counter++;
         }
         IDAssignmentResult result;
         result.id = (ushort)ReservedObjectIDs.Unspecified;
@@ -300,7 +313,9 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     
     //Lookup a player in an error-safe way
     public Player LookupPlayer(ulong id) {
-        if (playerList.ContainsKey(id)) {
+        Player result;
+        playerList.TryGetValue(id, out result);
+        if (result != null) {
             return playerList[id]; //Hash table enables very fast lookup
         }
         else {
@@ -311,11 +326,13 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     //Lookup an object in an error-safe way
     public MeshNetworkIdentity LookupObject(ushort objectID) {
-        if (objectList.ContainsKey(objectID)) {
+        MeshNetworkIdentity result;
+        objectList.TryGetValue(objectID, out result);
+        if (result != null) {
             return objectList[objectID]; //Hash table enables very fast lookup
         }
         else {
-            Debug.LogError("LookupObject() cannot find indicated playerID" + objectID);
+            Debug.LogError("LookupObject() cannot find indicated objectID" + objectID);
             return null;
         }
     }
@@ -354,11 +371,13 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
         ushort hash = 0x0;
 
-        foreach(KeyValuePair<ulong, Player> entry in players) {
-            Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
-            Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
+        Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
+        Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
+        DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
+
+        foreach (KeyValuePair<ulong, Player> entry in players) {
+            
             fakePlayerDelta.Add(entry.Value, StateChange.Change);
-            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
             for (int j = 0; j < data.Length; j++) {
@@ -367,12 +386,11 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             }
 
             hash = (ushort)(hash ^ checksum);
+            fakePlayerDelta.Clear();
         }
         foreach (KeyValuePair<ushort, MeshNetworkIdentity> entry in objects) {
-            Dictionary<Player, StateChange> fakePlayerDelta = new Dictionary<Player, StateChange>();
-            Dictionary<MeshNetworkIdentity, StateChange> fakeObjectDelta = new Dictionary<MeshNetworkIdentity, StateChange>();
+            
             fakeObjectDelta.Add(entry.Value, StateChange.Change);
-            DatabaseUpdate fakeUpdate = new DatabaseUpdate(fakePlayerDelta, fakeObjectDelta, 0, false);
             byte[] data = fakeUpdate.GetSerializedBytes();
             ushort checksum = 0;
             for (int j = 0; j < data.Length; j++) {
@@ -381,6 +399,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             }
 
             hash = (ushort)(hash ^ checksum);
+            fakeObjectDelta.Clear();
         }
 
         return hash;
@@ -527,7 +546,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         if(check != dbup.fullHash) {
             Debug.Log("Database checksum doesn't match: " + check + " vs " + dbup.fullHash + ". Requesting full update.");
             MeshPacket p = new MeshPacket(new byte[0], PacketType.FullUpdateRequest,
-                GetIdentity().meshnetReference.GetSteamID(),
+                GetIdentity().meshnetReference.GetLocalPlayerID(),
                 GetIdentity().GetOwnerID(),
                 GetIdentity().GetObjectID(),
                 GetIdentity().GetObjectID());
@@ -659,4 +678,6 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         GetIdentity().RoutePacket(packet);
     }
     
+    
+
 }

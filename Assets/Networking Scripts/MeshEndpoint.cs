@@ -68,7 +68,7 @@ public class MeshEndpoint : MonoBehaviour {
     void ParseData(MeshPacket incomingPacket) {
         
         //Debug.Log("Packet parsing: type = " + incomingPacket.GetPacketType() + ", source playerID = " + incomingPacket.GetSourcePlayerId() + ", target objectID = " + incomingPacket.GetTargetObjectId());
-        if (incomingPacket.GetSourcePlayerId() == meshnet.GetSteamID()) {
+        if (incomingPacket.GetSourcePlayerId() == meshnet.GetLocalPlayerID()) {
             //Debug.Log("Discarding packet from self");
             //return;
         }
@@ -128,7 +128,7 @@ public class MeshEndpoint : MonoBehaviour {
             Debug.LogError("Trying to send packet when database does not exist.");
         }
 
-        if(packet.GetTargetPlayerId() == meshnet.GetSteamID()) {
+        if(packet.GetTargetPlayerId() == meshnet.GetLocalPlayerID()) {
             ParseData(packet);
             return;
         }
@@ -138,7 +138,6 @@ public class MeshEndpoint : MonoBehaviour {
         byte[] data = packet.GetSerializedBytes();
         Player[] allPlayers = meshnet.database.GetAllPlayers();
         if (packet.GetTargetPlayerId() == (byte)ReservedPlayerIDs.Broadcast) {
-            Debug.Log("Endpoint is using broadcast!");
             foreach (Player p in allPlayers) {
                 SteamNetworking.SendP2PPacket(new CSteamID(p.GetUniqueID()), data, (uint)data.Length, packet.qos);
             }

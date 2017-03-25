@@ -8,11 +8,11 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
     public const float TRANSACTION_TIMEOUT = 10;
-
+    ushort lastID = 0;
     MeshNetworkIdentity thisObjectIdentity;
 
     Dictionary<ushort, IDContainer> callbackRegistry = new Dictionary<ushort, IDContainer>();
-    Dictionary<float, ushort> callbackTimers = new Dictionary<float, ushort>();
+    Dictionary<ushort, float> callbackTimers = new Dictionary<ushort, float>();
     float lastTimerCheck = 0;
     NetworkDatabase netDB;
 
@@ -25,12 +25,12 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     void Update() {
         if(Time.time - lastTimerCheck > 5f) {
-            float[] timers = new float[callbackTimers.Count];
-            callbackTimers.Keys.CopyTo(timers, 0);
-            foreach(float timer in timers) {
-                if(Time.time - timer > TRANSACTION_TIMEOUT) {
-                    callbackRegistry.Remove(callbackTimers[timer]);
-                    callbackTimers.Remove(timer);
+            ushort[] keys = new ushort[callbackTimers.Count];
+            callbackTimers.Keys.CopyTo(keys, 0);
+            for(int i = 0; i < keys.Length; i++) {
+                if(Time.time - callbackTimers[keys[i]] > TRANSACTION_TIMEOUT) {
+                    callbackRegistry.Remove(keys[i]);
+                    callbackTimers.Remove(keys[i]);
                 }
             }
         }
@@ -49,7 +49,6 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 Debug.LogError("User that does not own the database is trying to give us echoes");
                 return;
             }
-            Debug.Log("Receiving Echo!");
             StateChangeEcho echo;
             echo = StateChangeEcho.ParseSerializedBytes(p.GetContents());
             
@@ -63,13 +62,15 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         }
     }
 
-    ushort GetAvailableTransactionID() {
-        for(ushort i = 1; i < ushort.MaxValue; i++) {
-            if(callbackRegistry.ContainsKey(i) == false) {
-                return i;
-            }
+    ushort GetNextTransactionID() {
+        if(lastID == ushort.MaxValue - 1) {
+            lastID = 0;
+            return 0;
         }
-        return 0;
+        else {
+            lastID++;
+            return lastID;
+        }
     }
 
     public bool ScheduleChange(MeshNetworkIdentity id, StateChange change, ref IDContainer idReference) {
@@ -79,23 +80,18 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             return false;
         }
 
-        ushort transactionID = GetAvailableTransactionID();
-        if(transactionID == 0) {
-            Debug.LogError("State change scheduler ran out of available transaction IDs");
-            return false;
-        }
+        ushort transactionID = GetNextTransactionID();
+        
         callbackRegistry.Add(transactionID, idReference);
-        callbackTimers.Add(Time.time, transactionID);
+        callbackTimers.Add(transactionID, Time.time);
         StateChangeTransaction transaction = new StateChangeTransaction(transactionID, change, id);
         MeshPacket p = new MeshPacket();
         p.SetContents(transaction.GetSerializedBytes());
         p.SetPacketType(PacketType.DatabaseChangeRequest);
         p.SetSourceObjectId(GetIdentity().GetObjectID());
-        p.SetSourcePlayerId(GetIdentity().meshnetReference.GetSteamID());
+        p.SetSourcePlayerId(GetIdentity().meshnetReference.GetLocalPlayerID());
         p.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         p.SetTargetPlayerId(netDB.GetIdentity().GetOwnerID());
-        Debug.Log("Scheduler sending packet: target player ID = " + p.GetTargetPlayerId() + ", target object ID = " + p.GetTargetObjectId());
-
         GetIdentity().RoutePacket(p);
         return true;
         

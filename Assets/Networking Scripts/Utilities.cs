@@ -65,7 +65,8 @@ namespace Utilities {
         DatabaseUpdate = 10,
         PlayerJoin = 11,
         DatabaseChangeRequest = 12,
-        DatabaseChangeEcho = 13
+        DatabaseChangeEcho = 13,
+        TransformUpdate = 20
 
     }
 
@@ -592,6 +593,80 @@ namespace Utilities {
         }
     }
 
+    public class TransformUpdate : IMeshSerializable {
+        public Vector3 position;
+        public Vector3 velocity;
+        public Vector3 acceleration;
+        public Quaternion rotation;
+        public Quaternion rotationalVelocity;
+        public bool isKinematic;
+        
+
+        public byte[] GetSerializedBytes() {
+            byte[] output = new byte[3*3*4 + 2*4*4 + 1];
+            Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, output, 0, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, output, 4, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, output, 8, 4);
+
+
+            Buffer.BlockCopy(BitConverter.GetBytes(velocity.x), 0, output, 12, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(velocity.y), 0, output, 16, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(velocity.z), 0, output, 20, 4);
+
+            Buffer.BlockCopy(BitConverter.GetBytes(acceleration.x), 0, output, 24, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(acceleration.y), 0, output, 28, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(acceleration.z), 0, output, 32, 4);
+
+
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.w), 0, output, 36, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.x), 0, output, 40, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.y), 0, output, 44, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotation.z), 0, output, 48, 4);
+
+            Buffer.BlockCopy(BitConverter.GetBytes(rotationalVelocity.w), 0, output, 52, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotationalVelocity.x), 0, output, 56, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotationalVelocity.y), 0, output, 60, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(rotationalVelocity.z), 0, output, 64, 4);
+
+            if (isKinematic) {
+                output[68] = 1;
+            }
+            else {
+                output[68] = 0;
+            }
+            return output;
+
+        }
+
+        
+        public static TransformUpdate ParseSerializedBytes(byte[] data) {
+            TransformUpdate t = new TransformUpdate();
+            t.position.x = BitConverter.ToSingle(data, 0);
+            t.position.y = BitConverter.ToSingle(data, 4);
+            t.position.z = BitConverter.ToSingle(data, 8);
+
+            t.velocity.x = BitConverter.ToSingle(data, 12);
+            t.velocity.y = BitConverter.ToSingle(data, 16);
+            t.velocity.z = BitConverter.ToSingle(data, 20);
+
+            t.acceleration.x = BitConverter.ToSingle(data, 24);
+            t.acceleration.y = BitConverter.ToSingle(data, 28);
+            t.acceleration.z = BitConverter.ToSingle(data, 32);
+
+            t.rotation.w = BitConverter.ToSingle(data, 36);
+            t.rotation.x = BitConverter.ToSingle(data, 40);
+            t.rotation.y = BitConverter.ToSingle(data, 44);
+            t.rotation.z = BitConverter.ToSingle(data, 48);
+
+            t.rotationalVelocity.w = BitConverter.ToSingle(data, 52);
+            t.rotationalVelocity.x = BitConverter.ToSingle(data, 56);
+            t.rotationalVelocity.y = BitConverter.ToSingle(data, 60);
+            t.rotationalVelocity.z = BitConverter.ToSingle(data, 64);
+
+            t.isKinematic = (data[68] == 1);
+            return t;
+        }
+    }
     
     //All networked components must implement this.
     public interface IReceivesPacket<MeshPacket> {

@@ -81,7 +81,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
             Debug.LogError("Meshnet reference missing");
             return false;
         }
-        if (meshnetReference.GetSteamID() == GetOwnerID()) {
+        if (meshnetReference.GetLocalPlayerID() == GetOwnerID()) {
             return true;
         }else {
             return false;

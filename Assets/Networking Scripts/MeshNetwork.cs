@@ -43,6 +43,9 @@ public class MeshNetwork : MonoBehaviour {
     CallResult<LobbyMatchList_t> m_GotLobbyList;
     Callback<P2PSessionRequest_t> m_NewUserSession;
     Callback<LobbyChatUpdate_t> m_ChatUpdate;
+
+    ulong localPlayerID = (ulong)ReservedPlayerIDs.Unspecified;
+
     void Start() {
         Debug.logger.logEnabled = true;
         DontDestroyOnLoad(gameObject);
@@ -92,6 +95,7 @@ public class MeshNetwork : MonoBehaviour {
             m_GotLobbyList = CallResult<LobbyMatchList_t>.Create(OnGotLobbyList);
             m_NewUserSession = Callback<P2PSessionRequest_t>.Create(OnSessionRequest);
             m_ChatUpdate = Callback<LobbyChatUpdate_t>.Create(OnLobbyUpdate);
+            localPlayerID = SteamUser.GetSteamID().m_SteamID;
         }
         else {
             Debug.LogError("SteamManager not initialized!");
@@ -133,8 +137,8 @@ public class MeshNetwork : MonoBehaviour {
         return p;
     }
 
-    public ulong GetSteamID() {
-        return SteamUser.GetSteamID().m_SteamID;
+    public ulong GetLocalPlayerID() {
+        return localPlayerID;
     }
 
     public void RoutePacket(MeshPacket p) {
@@ -157,7 +161,7 @@ public class MeshNetwork : MonoBehaviour {
     public void WarmupHosting() {
         MeshNetworkIdentity databaseID = new MeshNetworkIdentity((ushort)ReservedObjectIDs.DatabaseObject,
             (ushort)ReservedPrefabIDs.Database,
-            (ulong)GetSteamID(), true);
+            (ulong)GetLocalPlayerID(), true);
 
         NetworkDatabase database2 = game.SpawnDatabase(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
         Debug.Log("Registering database.");
@@ -179,7 +183,7 @@ public class MeshNetwork : MonoBehaviour {
         //Construct the network database. Very important!
         MeshNetworkIdentity databaseID = new MeshNetworkIdentity((ushort)ReservedObjectIDs.DatabaseObject, 
             (ushort)ReservedPrefabIDs.Database, 
-            (ulong)GetSteamID(), true);
+            (ulong)GetLocalPlayerID(), true);
         
         database = game.SpawnDatabase(databaseID).GetComponent<NetworkDatabase>(); //Spawns the database prefab.
         Debug.Log("Registering database.");

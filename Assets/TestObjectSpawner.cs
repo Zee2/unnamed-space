@@ -4,11 +4,11 @@ using UnityEngine;
 using Utilities;
 
 public class TestObjectSpawner : MonoBehaviour {
-    
+    public ushort prefabID;
     public const float SPAWN_TIMEOUT = 5f;
     public MeshNetwork meshnet;
     StateChangeScheduler scheduler;
-
+    bool available = true;
 	// Use this for initialization
 	void Start () {
 		
@@ -16,7 +16,8 @@ public class TestObjectSpawner : MonoBehaviour {
 	
 	// Update is called once per frame
 	void Update () {
-        if (Input.GetKeyDown(KeyCode.Insert)) {
+        if (Input.GetKeyDown(KeyCode.Insert) && available) {
+            available = false;
             scheduler = meshnet.database.gameObject.GetComponent<StateChangeScheduler>();
             if(scheduler == null) {
                 Debug.LogError("Couldn't find scheduler");
@@ -24,17 +25,15 @@ public class TestObjectSpawner : MonoBehaviour {
             }
             StartCoroutine(SpawnCapsule());
         }
-        if (Input.GetKeyDown(KeyCode.Backspace)) {
-            Testing.ProfileSerialization();
-        }
+        
 	}
     
 
     IEnumerator SpawnCapsule() {
         float timeStart = Time.time;
-        MeshNetworkIdentity requestedID = new MeshNetworkIdentity(0, 2, meshnet.GetSteamID(), false);
+        MeshNetworkIdentity requestedID = new MeshNetworkIdentity(0, prefabID, meshnet.GetLocalPlayerID(), false);
         IDContainer returnedObjectID = new IDContainer((ushort)ReservedObjectIDs.Unspecified);
-        Debug.Log("Asking scheduler to make spawn request");
+
         scheduler.ScheduleChange(requestedID, StateChange.Addition, ref returnedObjectID);
 
         while(returnedObjectID.id == (ushort)ReservedObjectIDs.Unspecified) {
@@ -46,27 +45,19 @@ public class TestObjectSpawner : MonoBehaviour {
         }
 
         MeshNetworkIdentity newIdentity = meshnet.database.LookupObject(returnedObjectID.id);
-        Debug.Log("Prefab ids match: " + (requestedID.GetPrefabID() == newIdentity.GetPrefabID()));
-        Debug.Log("Owner ids match: " + (requestedID.GetOwnerID() == newIdentity.GetOwnerID()));
-
-
-
-        yield break; //temp
-        /*
+        yield break;
         yield return new WaitForSeconds(1);
 
         timeStart = Time.time;
-        returnedObjectID = (ushort)ReservedObjectIDs.Unspecified;
+        returnedObjectID = new IDContainer((ushort)ReservedObjectIDs.Unspecified);
         scheduler.ScheduleChange(newIdentity, StateChange.Removal, ref returnedObjectID);
-        while (returnedObjectID == (ushort)ReservedObjectIDs.Unspecified) {
+        while (returnedObjectID.id == (ushort)ReservedObjectIDs.Unspecified) {
             if (Time.time - timeStart > SPAWN_TIMEOUT) {
                 Debug.LogError("Spawn timeout");
                 yield break;
             }
             yield return new WaitForEndOfFrame();
         }
-        Debug.Log("Removal: objectIDS match: " + (returnedObjectID == newIdentity.GetObjectID()));
-        */
     }
 }
 

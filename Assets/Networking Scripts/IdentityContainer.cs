@@ -13,7 +13,7 @@ public class IdentityContainer : MonoBehaviour {
             
             identity.attachedComponents = new List<IReceivesPacket<MeshPacket>>();
             identity.attachedComponents.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
-            Debug.Log("Populated " + identity.attachedComponents.Count +" subcomponents on objectID " + identity.GetObjectID());
+
 
             foreach (IReceivesPacket<MeshPacket> c in identity.attachedComponents) {
                 Debug.Log("Component: " + c.GetType());
@@ -27,7 +27,7 @@ public class IdentityContainer : MonoBehaviour {
             }
         }
         else {
-            Debug.Log("This container's MeshNetworkIdentity doesn't exist. Something very weird just happened.");
+            Debug.LogError("This container's MeshNetworkIdentity doesn't exist. Something very weird just happened.");
         }
     }
 
