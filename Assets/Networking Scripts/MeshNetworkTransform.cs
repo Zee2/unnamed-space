@@ -213,8 +213,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisRigidbody.isKinematic = isKinematic;
 
             float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
-            
-            
+            float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / intervalFraction);
+
             if (hasRigidbody && isKinematic == false) { //use physics
                 //physcorrect = "offset applications per second"
                 currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.deltaTime;
@@ -249,16 +249,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             }
             else { //physicsless motion
                 
-                float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / intervalFraction);
-
-                currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, interleavedFraction);
-
+                
+                
 
                 
 
 
                 velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                position += (velocity * Time.deltaTime) + (updatedPosition - position) * 0.02f;
+                position += (velocity * Time.deltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f));
                 //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
