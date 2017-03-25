@@ -45,6 +45,8 @@ public class TestObjectSpawner : MonoBehaviour {
         }
 
         MeshNetworkIdentity newIdentity = meshnet.database.LookupObject(returnedObjectID.id);
+        GameObject g = meshnet.game.GetObjectByIdentity(newIdentity.GetObjectID());
+        g.AddComponent<BasicMovementTest>();
         yield break;
         yield return new WaitForSeconds(1);
 

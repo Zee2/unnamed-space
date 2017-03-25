@@ -47,6 +47,12 @@ public class GameCoordinator : MonoBehaviour {
         return;
     }
 
+    public GameObject GetObjectByIdentity(ushort id) {
+        GameObject g;
+        activeObjects.TryGetValue(id, out g);
+        return g;
+    }
+
     public GameObject SpawnDatabase(MeshNetworkIdentity i) {
 
         if (meshnet == null) {
