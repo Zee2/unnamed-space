@@ -80,8 +80,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     //networked
     Vector3 position;
-    Vector3 velocity;
-    Vector3 acceleration; //only used with kinematic bodies
+    public Vector3 velocity;
+    public Vector3 acceleration; //only used with kinematic bodies
     Quaternion rotation;
     Quaternion rotationalVelocity;
 
@@ -113,6 +113,10 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisRigidbody = GetComponent<Rigidbody>();
             hasRigidbody = true;
         }
+    }
+
+    void OnDrawGizmos() {
+        Gizmos.DrawLine(position, position + acceleration);
     }
 
 	// Update is called once per frame
@@ -159,6 +163,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocity = velocityAverage;
                 
                 
+                
                 accelerationBuffer.Dequeue();
                 accelerationBuffer.Enqueue((((thisTransform.localPosition - lastPosition) / Time.deltaTime) - lastVelocity) / Time.deltaTime);
                 accelerationBuffer.CopyTo(accelerationCopyBuffer, 0);
@@ -168,7 +173,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 accelerationAverage /= accelerationCopyBuffer.Length;
                 acceleration = accelerationAverage;
-
+                
+                lastPosition = position;
                 lastVelocity = velocity;
                 
                 rotationalVelocityBuffer.Dequeue();
@@ -179,8 +185,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     rotationalVelocityAverage *= rotationalVelocityCopyBuffer[i];
                 }
                 rotationalVelocity = Quaternion.Slerp(Quaternion.identity, rotationalVelocityAverage, (float)(1 / rotationalVelocityCopyBuffer.Length));
-
+                
                 lastRotation = rotation;
+                
 
             }
             if(Time.time - lastBroadcastTime > (1 / BROADCAST_RATE)) {
