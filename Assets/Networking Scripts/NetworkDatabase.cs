@@ -99,14 +99,16 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     public void Update() {
         if(debugText != null) {
             string s = "";
-            s += "Players: ";
+            s += "Players: \n";
             foreach(Player p in playerList.Values) {
                 s += p.GetNameSanitized() + ":" + p.GetUniqueID();
                 s += "\n";
             }
-            s += "\nObjects: ";
+            s += "\nObjects: \n";
             foreach (MeshNetworkIdentity i in objectList.Values) {
                 s += i.GetPrefabID() + ":" + i.GetObjectID();
+                s += "\n";
+                s += "    " + i.GetOwnerID();
                 s += "\n";
             }
             debugText.text = s;

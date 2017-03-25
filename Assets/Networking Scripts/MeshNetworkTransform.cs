@@ -191,7 +191,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
             }
             if(Time.time - lastBroadcastTime > (1 / BROADCAST_RATE)) {
+                lastBroadcastTime = Time.time;
                 BroadcastUpdate();
+                
             }
         }
         else { //if we are the shadow (2edgy4me)
