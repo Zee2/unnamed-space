@@ -20,6 +20,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public int NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE = 4;
     public int INTERP_DELAY_MILLISECONDS = 50;
     public float BROADCAST_RATE = 2;
+    public float physcorrect = 20;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -213,8 +214,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
                 //here we're just recording what the physics engine is doing
-                currentOffset = (updatedPosition - beforeUpdatePosition) * (0.05f) * Time.deltaTime;
-                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (0.05f) * Time.deltaTime;
+                currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.deltaTime;
+                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.deltaTime;
                 if (adjusted.magnitude > (updatedPosition - beforeUpdatePosition).magnitude) {
                     currentOffset = Vector3.zero;
                     currentVelocityOffset = Vector3.zero;
