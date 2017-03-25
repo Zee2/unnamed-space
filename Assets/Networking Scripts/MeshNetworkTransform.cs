@@ -153,7 +153,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else {
-                
+                /*
                 velocityBuffer.Dequeue();
                 velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.deltaTime);
 
@@ -164,8 +164,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 velocityAverage /= velocityCopyBuffer.Length;
                 velocity = velocityAverage;
-                
-                
+                */
+                velocity = thisRigidbody.velocity;
 
                 
                 
@@ -215,10 +215,10 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             else { //physicsless motion
                 //acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
                 acceleration = updatedAcceleration;
-                currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
+                
                 //currentVelocityOffset = updatedVelocity;
                 //velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
-                velocity = updatedVelocity;
+                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
                 position = currentOffset + (velocity * (Time.time-lastUpdateTime));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
