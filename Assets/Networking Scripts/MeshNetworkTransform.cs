@@ -103,7 +103,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         for (int i = 0; i < NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE; i++) {
             rotationalVelocityBuffer.Enqueue(Quaternion.identity);
         }
-        velocityCopyBuffer = new Vector3[NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE];
+        rotationalVelocityCopyBuffer = new Quaternion[NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE];
 
         if (GetComponent<Rigidbody>() == null) {
             Debug.Log("Enabling non-physics network transform");
