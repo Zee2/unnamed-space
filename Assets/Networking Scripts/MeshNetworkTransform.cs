@@ -211,13 +211,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
             //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
-                
-                
-                thisRigidbody.velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
-                float angle;
-                Vector3 axis;
-                updatedRotationalVelocity.ToAngleAxis(out angle, out axis);
-                thisRigidbody.angularVelocity = axis * angle * Mathf.Deg2Rad;
+                //here we're just recording what the physics engine is doing
+                velocity = thisRigidbody.velocity;
+                position = thisRigidbody.position;
+                rotation = thisRigidbody.rotation;
+                Vector3 v = thisRigidbody.angularVelocity;
+                float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
                 //acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
@@ -232,8 +232,15 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
                 rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.time - lastUpdateTime);
 
-                thisTransform.localPosition = position;
-                thisTransform.localRotation = rotation;
+                if (hasRigidbody) {
+                    thisRigidbody.MovePosition(position);
+                    thisRigidbody.MoveRotation(rotation);
+                }
+                else {
+                    thisTransform.position = position;
+                    thisTransform.localRotation = rotation;
+                }
+                    
                 
             }
         }
@@ -281,8 +288,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         updatedRotationalVelocity = t.rotationalVelocity;
 
         if(hasRigidbody && isKinematic == false) {
-            if (Vector3.Distance(thisRigidbody.position, updatedPosition) > 0.1f)
+            if (Vector3.Distance(thisRigidbody.position, updatedPosition) > 0.05f)
                 thisRigidbody.MovePosition(updatedPosition);
+            if (Vector3.Distance(thisRigidbody.velocity, updatedVelocity) > 0.05f)
+                thisRigidbody.velocity = velocity;
+            float angle;
+            Vector3 axis;
+            updatedRotationalVelocity.ToAngleAxis(out angle, out axis);
+            thisRigidbody.angularVelocity = axis * angle * Mathf.Deg2Rad;
         }
 
     }
