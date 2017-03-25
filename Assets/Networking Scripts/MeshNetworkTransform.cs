@@ -41,11 +41,6 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         Vector3 updatedVelocity = Vector3.zero;
         Vector3 currentVelocityOffset;
 
-    //Shadow acceleration variables
-
-        Vector3 beforeUpdateAcceleration = Vector3.zero;
-        Vector3 updatedAcceleration = Vector3.zero;
-
     //Shadow rotation variables
 
         Quaternion beforeUpdateRotation;
@@ -56,10 +51,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         Quaternion beforeUpdateRotationalVelocity;
         Quaternion updatedRotationalVelocity;
+        Quaternion currentRotationalVelocityOffset;
 
     float lastUpdateTime = 0;
     float lastBroadcastTime = 0;
     Vector3 adjusted;
+
+    Vector3 tempAxisVariable;
+    float tempAngleVariable;
 
     //Master calculation variables
 
@@ -211,29 +210,43 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
             float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
             currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
-            //currentOffset = updatedPosition;
+            
             if (hasRigidbody && isKinematic == false) { //use physics
-                //here we're just recording what the physics engine is doing
+                //physcorrect = "offset applications per second"
                 currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.deltaTime;
                 currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.deltaTime;
-                if (adjusted.magnitude > (updatedPosition - beforeUpdatePosition).magnitude) {
+                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.deltaTime);
+                currentRotationalVelocityOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotationalVelocity) * updatedRotationalVelocity, physcorrect * Time.deltaTime);
+
+                //thus, 1/physcorrect = "amount of time it takes for a full offset"
+
+                if (Time.time - lastUpdateTime > 1/physcorrect) {
                     currentOffset = Vector3.zero;
                     currentVelocityOffset = Vector3.zero;
+                    currentRotationOffset = Quaternion.identity;
+                    currentRotationalVelocityOffset = Quaternion.identity;
                 }
                 
                 thisRigidbody.MovePosition(thisRigidbody.position + currentOffset);
                 thisRigidbody.velocity = thisRigidbody.velocity + currentVelocityOffset;
+                thisRigidbody.MoveRotation(thisRigidbody.rotation * currentRotationOffset);
+
+
+                Vector3 v = thisRigidbody.angularVelocity; //convert angular velocity into a quaternion for easier math
+                float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                //Construct the current angular velocity quaternion, and add the current offset, and then convert back to angleAxis
+                (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
+                thisRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
 
                 velocity = thisRigidbody.velocity;
                 position = thisRigidbody.position;
                 rotation = thisRigidbody.rotation;
-                Vector3 v = thisRigidbody.angularVelocity;
-                float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                v = thisRigidbody.angularVelocity;
+                angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
-                //acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
-                acceleration = updatedAcceleration;
+
                 
                 //currentVelocityOffset = updatedVelocity;
                 //velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
