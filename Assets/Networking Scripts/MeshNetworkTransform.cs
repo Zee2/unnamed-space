@@ -212,6 +212,10 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
                 //here we're just recording what the physics engine is doing
+
+                thisRigidbody.MovePosition(thisRigidbody.position + currentOffset);
+                thisRigidbody.velocity = thisRigidbody.velocity + Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
+
                 velocity = thisRigidbody.velocity;
                 position = thisRigidbody.position;
                 rotation = thisRigidbody.rotation;
