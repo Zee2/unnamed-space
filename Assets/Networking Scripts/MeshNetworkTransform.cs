@@ -153,9 +153,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else {
-                /*
+                
                 velocityBuffer.Dequeue();
-                velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.deltaTime);
+
+                if(hasRigidbody)
+                    velocityBuffer.Enqueue(thisRigidbody.velocity);
+                else
+                    velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.deltaTime);
 
                 velocityBuffer.CopyTo(velocityCopyBuffer, 0);
                 velocityAverage = Vector3.zero;
@@ -164,9 +168,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 velocityAverage /= velocityCopyBuffer.Length;
                 velocity = velocityAverage;
-                */
-                velocity = thisRigidbody.velocity;
-
+                
                 
                 
                 accelerationBuffer.Dequeue();
@@ -202,6 +204,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             }
         }
         else { //if we are the shadow (2edgy4me)
+
+            thisRigidbody.isKinematic = isKinematic;
+
             float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
             currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
             //currentOffset = updatedPosition;
@@ -258,6 +263,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     void ProcessUpdate(TransformUpdate t) {
+        thisRigidbody.WakeUp();
         lastUpdateTime = Time.time;
         isKinematic = t.isKinematic;
         beforeUpdatePosition = position;
