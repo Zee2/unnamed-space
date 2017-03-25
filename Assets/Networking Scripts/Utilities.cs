@@ -226,7 +226,7 @@ namespace Utilities {
             PacketType.PlayerJoin,
             PacketType.DatabaseChangeEcho,
             PacketType.DatabaseChangeRequest });
-        public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{ PacketType.VOIP });
+        public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{ PacketType.VOIP, PacketType.TransformUpdate });
 
 
         private byte[] contents;

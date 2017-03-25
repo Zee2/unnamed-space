@@ -32,7 +32,7 @@ public class MeshEndpoint : MonoBehaviour {
 
     List<MeshPacket> failedPackets = new List<MeshPacket>();
     Dictionary<MeshPacket, int> packetRetries = new Dictionary<MeshPacket, int>();
-
+    float msAllowedForPackets = 5;
     //Checks for packets from all servers.
 
 
@@ -42,6 +42,8 @@ public class MeshEndpoint : MonoBehaviour {
         
     }
     public void Receive() {
+        System.Diagnostics.Stopwatch timeSpentProcessingPackets = new System.Diagnostics.Stopwatch();
+        timeSpentProcessingPackets.Start();
         /*
         if (failedPackets.Count > 0) {
             MeshPacket p = failedPackets[0];
@@ -51,15 +53,19 @@ public class MeshEndpoint : MonoBehaviour {
         */
 
         uint bufferLength = 0;
-        if (SteamNetworking.IsP2PPacketAvailable(out bufferLength)) {
-            //Debug.Log("Receiving Packet, " + bufferLength + " bytes long");
-            byte[] destBuffer = new byte[bufferLength];
-            UInt32 bytesRead = 0;
-            CSteamID remoteID;
-            SteamNetworking.ReadP2PPacket(destBuffer, bufferLength, out bytesRead, out remoteID);
-            //Debug.Log("CSteamID remoteID = " + remoteID.m_SteamID);
-            ParseData(new MeshPacket(destBuffer));
+        while (timeSpentProcessingPackets.Elapsed.TotalMilliseconds < msAllowedForPackets) {
+            bufferLength = 0;
+            if (SteamNetworking.IsP2PPacketAvailable(out bufferLength)) {
+                //Debug.Log("Receiving Packet, " + bufferLength + " bytes long");
+                byte[] destBuffer = new byte[bufferLength];
+                UInt32 bytesRead = 0;
+                CSteamID remoteID;
+                SteamNetworking.ReadP2PPacket(destBuffer, bufferLength, out bytesRead, out remoteID);
+                //Debug.Log("CSteamID remoteID = " + remoteID.m_SteamID);
+                ParseData(new MeshPacket(destBuffer));
+            }
         }
+        
         
         
     }

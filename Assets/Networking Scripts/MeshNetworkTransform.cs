@@ -215,8 +215,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             else { //physicsless motion
                 //acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
                 acceleration = updatedAcceleration;
-                //currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
-                currentVelocityOffset = updatedVelocity;
+                currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
+                //currentVelocityOffset = updatedVelocity;
                 //velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
                 velocity = updatedVelocity;
                 position = currentOffset + (velocity * (Time.time-lastUpdateTime));
