@@ -139,6 +139,10 @@ public class MeshEndpoint : MonoBehaviour {
         Player[] allPlayers = meshnet.database.GetAllPlayers();
         if (packet.GetTargetPlayerId() == (byte)ReservedPlayerIDs.Broadcast) {
             foreach (Player p in allPlayers) {
+                if(p.GetUniqueID() == meshnet.GetLocalPlayerID() && packet.GetPacketType() == PacketType.TransformUpdate) {
+                    continue;
+                }
+
                 SteamNetworking.SendP2PPacket(new CSteamID(p.GetUniqueID()), data, (uint)data.Length, packet.qos);
             }
         }

@@ -19,7 +19,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public int NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE = 4;
     public int NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE = 4;
     public int INTERP_DELAY_MILLISECONDS = 50;
-    public int BROADCAST_RATE = 2;
+    public float BROADCAST_RATE = 2;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -116,6 +116,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     void OnDrawGizmos() {
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(position, position + velocity);
+        Gizmos.color = Color.blue;
         Gizmos.DrawLine(position, position + acceleration);
     }
 
@@ -162,6 +165,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocityAverage /= velocityCopyBuffer.Length;
                 velocity = velocityAverage;
                 
+                
+
                 
                 
                 accelerationBuffer.Dequeue();
