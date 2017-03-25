@@ -16,8 +16,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     */
 
     //not networked
-    public int NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE = 4;
-    public int NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE = 4;
+    public int VELOCITY_SAMPLE_SIZE = 4;
+    public int ROTATION_SAMPLE_SIZE = 4;
     public int INTERP_DELAY_MILLISECONDS = 50;
     public float BROADCAST_RATE = 2;
     public float physcorrect = 20;
@@ -66,10 +66,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     //Master calculation variables
 
-        Vector3 accelerationAverage;
-        Vector3 lastAcceleration;
-        Queue<Vector3> accelerationBuffer = new Queue<Vector3>();
-        Vector3[] accelerationCopyBuffer;
+        
 
         Vector3 velocityAverage;
         Vector3 lastVelocity;
@@ -93,22 +90,17 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     bool isKinematic;
 	
     void OnEnable() {
-        velocityBuffer = new Queue<Vector3>(NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE);
-        for (int i = 0; i < NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE; i++) {
+        velocityBuffer = new Queue<Vector3>(VELOCITY_SAMPLE_SIZE);
+        for (int i = 0; i < VELOCITY_SAMPLE_SIZE; i++) {
             velocityBuffer.Enqueue(Vector3.zero);
         }
-        velocityCopyBuffer = new Vector3[NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE];
-        accelerationBuffer = new Queue<Vector3>(NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE);
-        for (int i = 0; i < NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE; i++) {
-            accelerationBuffer.Enqueue(Vector3.zero);
-        }
-        accelerationCopyBuffer = new Vector3[NON_RIGIDBODY_ACCELERATION_SAMPLE_SIZE];
-
-        rotationalVelocityBuffer = new Queue<Quaternion>(NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE);
-        for (int i = 0; i < NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE; i++) {
+        velocityCopyBuffer = new Vector3[VELOCITY_SAMPLE_SIZE];
+        
+        rotationalVelocityBuffer = new Queue<Quaternion>(ROTATION_SAMPLE_SIZE);
+        for (int i = 0; i < VELOCITY_SAMPLE_SIZE; i++) {
             rotationalVelocityBuffer.Enqueue(Quaternion.identity);
         }
-        rotationalVelocityCopyBuffer = new Quaternion[NON_RIGIDBODY_VELOCITY_SAMPLE_SIZE];
+        rotationalVelocityCopyBuffer = new Quaternion[VELOCITY_SAMPLE_SIZE];
 
         if (GetComponent<Rigidbody>() == null) {
             Debug.Log("Enabling non-physics network transform");
@@ -128,7 +120,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
 	// Update is called once per frame
-	void Update () {
+	void FixedUpdate () {
         if(GetIdentity() == null) {
             return;
             //Probably not set up yet.
@@ -174,17 +166,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocityAverage /= velocityCopyBuffer.Length;
                 velocity = velocityAverage;
                 
-                
-                
-                accelerationBuffer.Dequeue();
-                accelerationBuffer.Enqueue((((thisTransform.localPosition - lastPosition) / Time.deltaTime) - lastVelocity) / Time.deltaTime);
-                accelerationBuffer.CopyTo(accelerationCopyBuffer, 0);
-                accelerationAverage = Vector3.zero;
-                for (byte i = 0; i < accelerationCopyBuffer.Length; i++) {
-                    accelerationAverage += accelerationCopyBuffer[i];
-                }
-                accelerationAverage /= accelerationCopyBuffer.Length;
-                //acceleration = accelerationAverage;
+          
                 
                 lastPosition = position;
                 lastVelocity = velocity;
