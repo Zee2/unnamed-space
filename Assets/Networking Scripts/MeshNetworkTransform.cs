@@ -156,7 +156,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocityBuffer.Dequeue();
 
                 
-                velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.deltaTime);
+                velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.fixedDeltaTime);
 
                 velocityBuffer.CopyTo(velocityCopyBuffer, 0);
                 velocityAverage = Vector3.zero;
@@ -172,7 +172,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 lastVelocity = velocity;
                 
                 rotationalVelocityBuffer.Dequeue();
-                rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation)*rotation, 1/Time.deltaTime));
+                rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation)*rotation, 1/Time.fixedDeltaTime));
                 rotationalVelocityBuffer.CopyTo(rotationalVelocityCopyBuffer, 0);
                 rotationalVelocityAverage = Quaternion.identity;
                 for (byte i = 0; i < rotationalVelocityCopyBuffer.Length; i++) {
@@ -184,8 +184,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 
 
             }
-            if(Time.time - lastBroadcastTime > (float)(1 / BROADCAST_RATE)) {
-                lastBroadcastTime = Time.time;
+            if(Time.fixedTime - lastBroadcastTime > (float)(1 / BROADCAST_RATE)) {
+                lastBroadcastTime = Time.fixedTime;
                 BroadcastUpdate();
                 
             }
@@ -194,17 +194,17 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
             thisRigidbody.isKinematic = isKinematic;
 
-            float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
-            float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / intervalFraction);
+            float timeFraction = ((Time.fixedTime - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
+            float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (lastInterval / intervalFraction);
 
             if (hasRigidbody && isKinematic == false) { //use physics
                 //physcorrect = "offset applications per second"
-                currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.deltaTime;
-                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.deltaTime;
-                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.deltaTime);
+                currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.fixedDeltaTime;
+                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.fixedDeltaTime;
+                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.fixedDeltaTime);
                 currentRotationalVelocityOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotationalVelocity) * updatedRotationalVelocity, physcorrect * Time.deltaTime);
                 //thus, 1/physcorrect = "amount of time it takes for a full offset"
-                if (Time.time - lastUpdateTime > 1/physcorrect) {
+                if (Time.fixedTime - lastUpdateTime > 1/physcorrect) {
                     currentOffset = Vector3.zero;
                     currentVelocityOffset = Vector3.zero;
                     currentRotationOffset = Quaternion.identity;
@@ -238,12 +238,12 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                position += (velocity * Time.deltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f));
+                position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f));
                 //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
-                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.time - lastUpdateTime);
+                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
                 if (hasRigidbody) {
                     thisRigidbody.MovePosition(position);
