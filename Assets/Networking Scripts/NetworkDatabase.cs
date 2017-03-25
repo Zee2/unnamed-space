@@ -567,20 +567,22 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         foreach(MeshNetworkIdentity i in dbup.objectDelta.Keys) {
             dbupObjectHashTable.Add(i.GetObjectID(), i);
         }
-        foreach(ushort localObjectID in objectList.Keys) { //iterate through all local objects
+        ushort[] keyArray = new ushort[objectList.Count];
+        objectList.Keys.CopyTo(keyArray, 0);
+        DatabaseChangeResult result;
+        foreach (ushort localObjectID in keyArray) { //iterate through all local objects
             if (dbupObjectHashTable.ContainsKey(localObjectID)) {
-
-
-
                 //if they are the same prefab, keep the object, but update the info
                 if(dbupObjectHashTable[localObjectID].GetPrefabID() == LookupObject(localObjectID).GetPrefabID()) {
                     LookupObject(localObjectID).DeepCopyAndApply(dbupObjectHashTable[localObjectID]);
                 }
                 else { //if they are different prefabs, something seriously screwy happened and we need to nuke the local object
-                    RemoveObject(LookupObject(localObjectID), false); //the order of these commands is very important
-                    game.RemoveObject(localObjectID);
-                    AddObject(dbupObjectHashTable[localObjectID], false);
-                    game.SpawnObject(localObjectID);
+                    result = RemoveObject(LookupObject(localObjectID), false); //the order of these commands is very important
+                    if(result.success)
+                        game.RemoveObject(localObjectID);
+                    result = AddObject(dbupObjectHashTable[localObjectID], false);
+                    if(result.success)
+                        game.SpawnObject(localObjectID);
                     //this will probably break some gameplay stuff
                     //so this probably shouldn't happen very often
                 }
@@ -590,12 +592,15 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             else {
                 RemoveObject(LookupObject(localObjectID), false); //If we have it and the fullUpdate doesn't, nuke it!
             }
-            //Now, only the objects that we don't have yet are left in the databaseupdate
-            //Debug.Log(dbupObjectHashTable.Keys.Count + " items included in fullUpdate that we don't currently have. Now adding them");
-            foreach(MeshNetworkIdentity i in dbupObjectHashTable.Values) {
-                AddObject(i, false); //add the ones we should have
-            }
+            
 
+        }
+        //Now, only the objects that we don't have yet are left in the databaseupdate
+        //Debug.Log(dbupObjectHashTable.Keys.Count + " items included in fullUpdate that we don't currently have. Now adding them");
+        foreach (MeshNetworkIdentity i in dbupObjectHashTable.Values) {
+            result = AddObject(i, false); //add the ones we should have
+            if (result.success)
+                game.SpawnObject(i.GetObjectID());
         }
     }
 

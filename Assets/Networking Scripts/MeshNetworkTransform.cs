@@ -21,7 +21,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public int INTERP_DELAY_MILLISECONDS = 50;
     public float BROADCAST_RATE = 2;
     public float physcorrect = 20;
-    public AnimationCurve curve;
+    public float intervalFraction = 4;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -249,7 +249,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             }
             else { //physicsless motion
                 
-                float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / 4f);
+                float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / intervalFraction);
+
                 currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, interleavedFraction);
 
 
