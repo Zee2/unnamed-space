@@ -203,8 +203,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         }
         else { //if we are the shadow (2edgy4me)
             float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
-            //currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
-            currentOffset = updatedPosition;
+            currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
+            //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
                 thisRigidbody.velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
                 float angle;
