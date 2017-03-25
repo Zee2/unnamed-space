@@ -58,6 +58,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     float lastUpdateTime = 0;
     float lastBroadcastTime = 0;
+    Vector3 adjusted;
 
     //Master calculation variables
 
@@ -212,9 +213,15 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
                 //here we're just recording what the physics engine is doing
-
+                currentOffset = (updatedPosition - beforeUpdatePosition) * (INTERP_DELAY_MILLISECONDS / 1000) * Time.deltaTime;
+                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (INTERP_DELAY_MILLISECONDS / 1000) * Time.deltaTime;
+                if (adjusted.magnitude > (updatedPosition - beforeUpdatePosition).magnitude) {
+                    currentOffset = Vector3.zero;
+                    currentVelocityOffset = Vector3.zero;
+                }
+                
                 thisRigidbody.MovePosition(thisRigidbody.position + currentOffset);
-                thisRigidbody.velocity = thisRigidbody.velocity + Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
+                thisRigidbody.velocity = thisRigidbody.velocity + currentVelocityOffset;
 
                 velocity = thisRigidbody.velocity;
                 position = thisRigidbody.position;
@@ -292,10 +299,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         updatedRotationalVelocity = t.rotationalVelocity;
 
         if(hasRigidbody && isKinematic == false) {
-            if (Vector3.Distance(thisRigidbody.position, updatedPosition) > 0.05f)
-                thisRigidbody.MovePosition(updatedPosition);
-            if (Vector3.Distance(thisRigidbody.velocity, updatedVelocity) > 0.05f)
-                thisRigidbody.velocity = velocity;
+            
             float angle;
             Vector3 axis;
             updatedRotationalVelocity.ToAngleAxis(out angle, out axis);
