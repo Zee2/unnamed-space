@@ -211,6 +211,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
             //currentOffset = updatedPosition;
             if (hasRigidbody && isKinematic == false) { //use physics
+                
+                
                 thisRigidbody.velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
                 float angle;
                 Vector3 axis;
@@ -277,6 +279,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         updatedAcceleration = t.acceleration;
         updatedRotation = t.rotation;
         updatedRotationalVelocity = t.rotationalVelocity;
+
+        if(hasRigidbody && isKinematic == false) {
+            if (Vector3.Distance(thisRigidbody.position, updatedPosition) > 0.1f)
+                thisRigidbody.MovePosition(updatedPosition);
+        }
 
     }
 
