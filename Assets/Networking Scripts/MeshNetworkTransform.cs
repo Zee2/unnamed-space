@@ -177,7 +177,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     accelerationAverage += accelerationCopyBuffer[i];
                 }
                 accelerationAverage /= accelerationCopyBuffer.Length;
-                acceleration = accelerationAverage;
+                //acceleration = accelerationAverage;
                 
                 lastPosition = position;
                 lastVelocity = velocity;
@@ -217,7 +217,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 acceleration = updatedAcceleration;
                 //currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
                 currentVelocityOffset = updatedVelocity;
-                velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
+                //velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
+                velocity = updatedVelocity;
                 position = currentOffset + (velocity * (Time.time-lastUpdateTime));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
