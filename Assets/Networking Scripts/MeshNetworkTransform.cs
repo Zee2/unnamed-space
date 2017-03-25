@@ -302,13 +302,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         isKinematic = t.isKinematic;
         beforeUpdatePosition = position;
         beforeUpdateVelocity = velocity;
-        beforeUpdateAcceleration = acceleration;
         beforeUpdateRotation = rotation;
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position;
         updatedVelocity = t.velocity;
-        updatedAcceleration = t.acceleration;
         updatedRotation = t.rotation;
         updatedRotationalVelocity = t.rotationalVelocity;
 
