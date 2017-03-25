@@ -194,14 +194,16 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 thisRigidbody.angularVelocity = axis * angle * Mathf.Deg2Rad;
             }
             else { //physicsless motion
-                acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
-                currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
-                velocity = currentVelocityOffset + (acceleration * Time.deltaTime);
-                position = currentOffset + (velocity * Time.deltaTime);
+                //acceleration = Vector3.Lerp(beforeUpdateAcceleration, updatedAcceleration, timeFraction);
+                acceleration = updatedAcceleration;
+                //currentVelocityOffset = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
+                currentVelocityOffset = updatedVelocity;
+                velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
+                position = currentOffset + (velocity * (Time.time-lastUpdateTime));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
-                rotation = currentRotationOffset * Quaternion.Slerp(Quaternion.identity, rotationalVelocity, Time.time - lastUpdateTime);
+                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.time - lastUpdateTime);
 
                 thisTransform.localPosition = position;
                 thisTransform.localRotation = rotation;
@@ -266,7 +268,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         outgoingUpdate.isKinematic = isKinematic;
         outgoingUpdate.position = position;
         outgoingUpdate.velocity = velocity;
-        //outgoingUpdate.acceleration = acceleration;
+        outgoingUpdate.acceleration = acceleration;
         outgoingUpdate.rotation = rotation;
         outgoingUpdate.rotationalVelocity = rotationalVelocity;
 

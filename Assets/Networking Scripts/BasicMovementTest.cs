@@ -10,7 +10,7 @@ public class BasicMovementTest : MonoBehaviour {
     }
 	// Update is called once per frame
 	void Update() {
-        r.MovePosition(5 * Time.deltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
+        r.MovePosition(1 * Time.deltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
         
     }
 }
