@@ -21,6 +21,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public int INTERP_DELAY_MILLISECONDS = 50;
     public float BROADCAST_RATE = 2;
     public float physcorrect = 20;
+    public AnimationCurve curve;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -55,6 +56,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     float lastUpdateTime = 0;
     float lastBroadcastTime = 0;
+
+    float lastInterval = 0;
+
     Vector3 adjusted;
 
     Vector3 tempAxisVariable;
@@ -209,7 +213,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisRigidbody.isKinematic = isKinematic;
 
             float timeFraction = ((Time.time - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
-            currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, timeFraction);
+            
             
             if (hasRigidbody && isKinematic == false) { //use physics
                 //physcorrect = "offset applications per second"
@@ -217,9 +221,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.deltaTime;
                 currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.deltaTime);
                 currentRotationalVelocityOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotationalVelocity) * updatedRotationalVelocity, physcorrect * Time.deltaTime);
-
                 //thus, 1/physcorrect = "amount of time it takes for a full offset"
-
                 if (Time.time - lastUpdateTime > 1/physcorrect) {
                     currentOffset = Vector3.zero;
                     currentVelocityOffset = Vector3.zero;
@@ -246,12 +248,17 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
+                
+                float interleavedFraction = (Time.time - lastUpdateTime) / (lastInterval / 4f);
+                currentOffset = Vector3.Lerp(beforeUpdatePosition, updatedPosition, interleavedFraction);
+
 
                 
-                //currentVelocityOffset = updatedVelocity;
-                //velocity = currentVelocityOffset + (acceleration * (Time.time - lastUpdateTime));
-                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, timeFraction);
-                position = currentOffset + (velocity * (Time.time-lastUpdateTime));
+
+
+                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
+                position += (velocity * Time.deltaTime) + (updatedPosition - position) * 0.02f;
+                //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
@@ -269,6 +276,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 
             }
         }
+    }
+
+    float TweenFunction(float input) {
+        
+        return Mathf.Pow(input, 1.1f);
     }
 
     public MeshNetworkIdentity GetIdentity() {
@@ -298,7 +310,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     void ProcessUpdate(TransformUpdate t) {
         thisRigidbody.WakeUp();
+        lastInterval = Time.time - lastUpdateTime;
         lastUpdateTime = Time.time;
+        
         isKinematic = t.isKinematic;
         beforeUpdatePosition = position;
         beforeUpdateVelocity = velocity;
