@@ -117,6 +117,10 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         Gizmos.DrawLine(position, position + velocity);
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(position, position + acceleration);
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(updatedPosition, 0.2f);
+        Gizmos.color = Color.cyan;
+        Gizmos.DrawSphere(beforeUpdatePosition, 0.2f);
     }
 
 	// Update is called once per frame
