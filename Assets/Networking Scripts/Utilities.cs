@@ -28,7 +28,8 @@ namespace Utilities {
 
     public enum ReservedObjectIDs : ushort {
         Unspecified = 0,
-        DatabaseObject = 1
+        DatabaseObject = 1,
+        Architecture = 2
     }
     public enum ReservedPlayerIDs : ulong {
         Unspecified = 0,
@@ -66,7 +67,8 @@ namespace Utilities {
         PlayerJoin = 11,
         DatabaseChangeRequest = 12,
         DatabaseChangeEcho = 13,
-        TransformUpdate = 20
+        TransformUpdate = 20,
+        KickPacket = 30
 
     }
 
@@ -221,12 +223,16 @@ namespace Utilities {
 
     public class MeshPacket {
 
-        public static readonly List<PacketType> RELIABLE_TYPES = new List<PacketType>(new PacketType[] { PacketType.DatabaseUpdate,
+        public static readonly List<PacketType> RELIABLE_TYPES = new List<PacketType>(new PacketType[] {
+            PacketType.DatabaseUpdate,
             PacketType.FullUpdateRequest,
             PacketType.PlayerJoin,
             PacketType.DatabaseChangeEcho,
-            PacketType.DatabaseChangeRequest });
-        public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{ PacketType.VOIP, PacketType.TransformUpdate });
+            PacketType.DatabaseChangeRequest,
+            PacketType.KickPacket });
+        public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{
+            PacketType.VOIP,
+            PacketType.TransformUpdate });
 
 
         private byte[] contents;

@@ -32,6 +32,7 @@ public class MeshNetwork : MonoBehaviour {
 
     UIController networkUIController;
     public NetworkDatabase database;
+    public StateChangeScheduler scheduler;
     public GameCoordinator game;
     MeshEndpoint endpoint;
     //Current lobby
@@ -102,6 +103,12 @@ public class MeshNetwork : MonoBehaviour {
         }
         //WarmupHosting();
 
+    }
+
+    void Update() {
+        if(database != null) {
+            scheduler = database.GetComponent<StateChangeScheduler>();
+        }
     }
 
     protected void OnSessionRequest(P2PSessionRequest_t pCallback) {
@@ -223,10 +230,38 @@ public class MeshNetwork : MonoBehaviour {
     }
 
     public void OnLobbyUpdate(LobbyChatUpdate_t pCallback) {
-        if(pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected) {
-            Debug.Log("Player disconnected");
-        }else if(pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) {
-            Debug.Log("Player left");
+        if(pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected ||
+            pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) {
+            if(database != null) {
+                RemovePlayerFromGame(pCallback.m_ulSteamIDUserChanged);
+            }
+        }
+    }
+
+    public void RemovePlayerFromGame(ulong id) {
+        if(database == null) {
+            Debug.LogError("Can't clear out player without a database");
+            return;
+        }
+        if (!database.GetAuthorized()) {
+            Debug.LogError("Cant clear out player, not authorized");
+            return;
+        }
+        Player p = database.LookupPlayer(id);
+        if(p == null) {
+            Debug.LogError("Can't find player");
+        }
+        MeshPacket packet = new MeshPacket();
+        packet.SetPacketType(PacketType.KickPacket);
+        packet.SetSourceObjectId((ushort)ReservedObjectIDs.Architecture);
+        packet.SetSourcePlayerId(GetLocalPlayerID());
+        packet.SetTargetObjectId((ushort)ReservedObjectIDs.Architecture);
+        packet.SetTargetPlayerId(id);
+        RoutePacket(packet);
+        MeshNetworkIdentity[] objectsToUnlock = database.QueryLockedObjects(id);
+        for (int i = 0; i < objectsToUnlock.Length; i++) {
+            objectsToUnlock[i].SetLocked(false);
+            database.ChangeObject(objectsToUnlock[i], true);
         }
     }
 

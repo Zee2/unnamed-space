@@ -119,6 +119,17 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     public bool GetAuthorized() {
         return GetIdentity().IsLocallyOwned();
     }
+
+    public MeshNetworkIdentity[] QueryLockedObjects(ulong owner) {
+        List<MeshNetworkIdentity> objects = new List<MeshNetworkIdentity>(32);
+        foreach(KeyValuePair<ushort, MeshNetworkIdentity> entry in objectList) {
+            if (entry.Value.GetOwnerID() == owner && entry.Value.GetLocked()){
+                objects.Add(entry.Value);
+            }
+        }
+        objects.TrimExcess();
+        return objects.ToArray();
+    }
     
     //Player modification methods
     public DatabaseChangeResult AddPlayer(Player p, bool publishChange) {
@@ -321,7 +332,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             return playerList[id]; //Hash table enables very fast lookup
         }
         else {
-            Debug.LogError("LookupPlayer() cannot find indicated playerID" + id);
+            //Debug.LogError("LookupPlayer() cannot find indicated playerID" + id);
             return null;
         }
     }
@@ -334,7 +345,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             return objectList[objectID]; //Hash table enables very fast lookup
         }
         else {
-            Debug.LogError("LookupObject() cannot find indicated objectID" + objectID);
+            //Debug.LogError("LookupObject() cannot find indicated objectID" + objectID);
             return null;
         }
     }
@@ -654,6 +665,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             MeshNetworkIdentity localObjectToRemove = LookupObject(transaction.GetObjectData().GetObjectID());
             if(localObjectToRemove == null) {
                 Debug.LogError("Couldn't find the object requested to be removed.");
+                return;
             }
             DatabaseChangeResult result = RemoveObject(LookupObject(transaction.GetObjectData().GetObjectID()), true);
             if(result.success == false) {
@@ -663,6 +675,24 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
             else {
                 game.RemoveObject(result.data);
                 EchoChangeRequest(transaction.GetTransactionID(), localObjectToRemove.GetObjectID(), p.GetSourcePlayerId());
+            }
+        }else if(transaction.GetChangeType() == StateChange.Change) {
+            if (p.GetSourcePlayerId() != transaction.GetObjectData().GetOwnerID()) {
+                Debug.LogError("User trying to change an object that doesn't belong to them");
+                return;
+            }
+            MeshNetworkIdentity localObjectToChange = LookupObject(transaction.GetObjectData().GetObjectID());
+            if (localObjectToChange == null) {
+                Debug.LogError("Couldn't find the object requested to be changed.");
+                return;
+            }
+            DatabaseChangeResult result = ChangeObject(LookupObject(transaction.GetObjectData().GetObjectID()), true);
+            if (result.success == false) {
+                Debug.LogError("Requested object change failed: " + result.error);
+                return;
+            }
+            else {
+                EchoChangeRequest(transaction.GetTransactionID(), localObjectToChange.GetObjectID(), p.GetSourcePlayerId());
             }
         }
     }

@@ -138,9 +138,7 @@ public class MeshEndpoint : MonoBehaviour {
             ParseData(packet);
             return;
         }
-
-
-
+        
         byte[] data = packet.GetSerializedBytes();
         Player[] allPlayers = meshnet.database.GetAllPlayers();
         if (packet.GetTargetPlayerId() == (byte)ReservedPlayerIDs.Broadcast) {
@@ -153,8 +151,8 @@ public class MeshEndpoint : MonoBehaviour {
             }
         }
         else {
-            Player target = meshnet.database.LookupPlayer(packet.GetTargetPlayerId());
-            SteamNetworking.SendP2PPacket(new CSteamID(target.GetUniqueID()), data, (uint)data.Length, packet.qos);
+            
+            SteamNetworking.SendP2PPacket(new CSteamID(packet.GetTargetPlayerId()), data, (uint)data.Length, packet.qos);
         }
         
         
