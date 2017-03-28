@@ -215,7 +215,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 */
 
-
+                velocity = (updatedPosition - thisRigidbody.position) * (1 / lastInterval);
+                thisRigidbody.velocity = velocity;
+                return;
 
 
                 //physcorrect = "offset applications per second"
