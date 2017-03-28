@@ -19,9 +19,12 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public int VELOCITY_SAMPLE_SIZE = 4;
     public int ROTATION_SAMPLE_SIZE = 4;
     public int INTERP_DELAY_MILLISECONDS = 50;
+    public float unityInterpolateMovement = 1.0f;
+    public float unityInterpolateRotation = 1.0f;
     public float BROADCAST_RATE = 2;
     public float physcorrect = 20;
     public float intervalFraction = 4;
+    public bool useUnitySyncing = true;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -234,29 +237,35 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
-                
-                
-                
-
-                
 
 
-                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f)) * 0;
-                position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
+                if (useUnitySyncing) {
+                    Vector3 newVelocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
+                    thisRigidbody.velocity = newVelocity;
+                    thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
+                    updatedPosition += (updatedVelocity * Time.fixedDeltaTime * 0.1f);
+                }else {
+                    velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
+                    //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f)) * 0;
+                    position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
-                rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
-                currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
-                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
+                    rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
+                    currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
+                    rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
-                if (hasRigidbody) {
-                    thisRigidbody.MovePosition(position);
-                    thisRigidbody.MoveRotation(rotation);
+                    if (hasRigidbody) {
+                        thisRigidbody.MovePosition(position);
+                        thisRigidbody.MoveRotation(rotation);
+                    } else {
+                        thisTransform.position = position;
+                        thisTransform.localRotation = rotation;
+                    }
                 }
-                else {
-                    thisTransform.position = position;
-                    thisTransform.localRotation = rotation;
-                }
+
+                
+
+
+                
                     
                 
             }
