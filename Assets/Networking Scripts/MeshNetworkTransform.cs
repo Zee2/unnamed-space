@@ -157,11 +157,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else {
-                
+            
                 velocityBuffer.Dequeue();
 
                 
-                velocityBuffer.Enqueue((thisTransform.localPosition - lastPosition) / Time.fixedDeltaTime);
+                velocityBuffer.Enqueue((thisRigidbody.position - lastPosition) / Time.fixedDeltaTime);
 
                 velocityBuffer.CopyTo(velocityCopyBuffer, 0);
                 velocityAverage = Vector3.zero;
@@ -171,7 +171,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocityAverage /= velocityCopyBuffer.Length;
 
                 velocity = velocityAverage;
-          
+                //velocity = thisRigidbody.velocity;
                 
                 lastPosition = position;
                 lastVelocity = velocity;
@@ -238,7 +238,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 if (useUnitySyncing) {
-                    Vector3 newVelocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
+                    Vector3 newVelocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / Mathf.Max(0.01f, lastInterval));
                     thisRigidbody.velocity = newVelocity;
                     thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
                     updatedPosition += (updatedVelocity * Time.fixedDeltaTime * 0.1f);
