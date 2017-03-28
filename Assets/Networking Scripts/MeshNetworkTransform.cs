@@ -148,7 +148,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
             position = thisTransform.localPosition; //this may need changing to work with zoning
             rotation = thisTransform.localRotation;
-            /*
+            
             if (hasRigidbody && isKinematic == false) {
                 
                 velocity = thisRigidbody.velocity;
@@ -157,8 +157,6 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else {
-            */
-            if (true) {
                 
                 velocityBuffer.Dequeue();
 
@@ -171,8 +169,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     velocityAverage += velocityCopyBuffer[i];
                 }
                 velocityAverage /= velocityCopyBuffer.Length;
+
                 velocity = velocityAverage;
-                
           
                 
                 lastPosition = position;
@@ -308,9 +306,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         lastUpdateTime = Time.time;
         
         isKinematic = t.isKinematic;
-        beforeUpdatePosition = updatedPosition; //hmm
-        beforeUpdateVelocity = velocity;
-        beforeUpdateRotation = rotation;
+        beforeUpdatePosition = thisRigidbody.position; //hmm
+        beforeUpdateVelocity = thisRigidbody.velocity;
+        beforeUpdateRotation = thisRigidbody.rotation;
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position;
