@@ -152,7 +152,7 @@ public class MeshNetwork : MonoBehaviour {
         endpoint.Send(p);
     }
 
-    public void RoutePacketDirect(MeshPacket p, CSteamID id) {
+    public void RoutePacketDirect(MeshPacket p, ulong id) {
         endpoint.SendDirectToSteamID(p, id);
     }
 
@@ -244,24 +244,32 @@ public class MeshNetwork : MonoBehaviour {
             return;
         }
         if (!database.GetAuthorized()) {
-            Debug.LogError("Cant clear out player, not authorized");
             return;
         }
         Player p = database.LookupPlayer(id);
         if(p == null) {
             Debug.LogError("Can't find player");
         }
+        database.RemovePlayer(p, true);
         MeshPacket packet = new MeshPacket();
         packet.SetPacketType(PacketType.KickPacket);
         packet.SetSourceObjectId((ushort)ReservedObjectIDs.Architecture);
         packet.SetSourcePlayerId(GetLocalPlayerID());
         packet.SetTargetObjectId((ushort)ReservedObjectIDs.Architecture);
         packet.SetTargetPlayerId(id);
-        RoutePacket(packet);
-        MeshNetworkIdentity[] objectsToUnlock = database.QueryLockedObjects(id);
+        RoutePacketDirect(packet, id);
+        
+        MeshNetworkIdentity[] objectsToUnlock = database.QueryByOwner(id);
         for (int i = 0; i < objectsToUnlock.Length; i++) {
-            objectsToUnlock[i].SetLocked(false);
-            database.ChangeObject(objectsToUnlock[i], true);
+            if(objectsToUnlock[i].GetPrefabID() == (ushort)ReservedPrefabIDs.Player) {
+                database.RemoveObject(objectsToUnlock[i], true);
+            }
+            else {
+                objectsToUnlock[i].SetLocked(false);
+                objectsToUnlock[i].SetOwnerID(GetLocalPlayerID());
+                database.ChangeObject(objectsToUnlock[i], true);
+            }
+            
         }
     }
 
@@ -345,7 +353,7 @@ public class MeshNetwork : MonoBehaviour {
             (byte)ReservedObjectIDs.DatabaseObject);
 
         p.qos = EP2PSend.k_EP2PSendReliable;
-        RoutePacketDirect(p, new CSteamID(p.GetTargetPlayerId()));
+        RoutePacketDirect(p, p.GetTargetPlayerId());
         //Soon, we will receive a DatabaseUpdate with all of the up to date database information,
         //including our own player object!
 
@@ -376,6 +384,10 @@ public class MeshNetwork : MonoBehaviour {
         }
         database.ReceivePacket(p);
 
+    }
+
+    public void initiateDisconnect() {
+        
     }
 
     #endregion

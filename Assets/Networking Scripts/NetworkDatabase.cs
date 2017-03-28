@@ -120,10 +120,10 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         return GetIdentity().IsLocallyOwned();
     }
 
-    public MeshNetworkIdentity[] QueryLockedObjects(ulong owner) {
+    public MeshNetworkIdentity[] QueryByOwner(ulong owner) {
         List<MeshNetworkIdentity> objects = new List<MeshNetworkIdentity>(32);
         foreach(KeyValuePair<ushort, MeshNetworkIdentity> entry in objectList) {
-            if (entry.Value.GetOwnerID() == owner && entry.Value.GetLocked()){
+            if (entry.Value.GetOwnerID() == owner){
                 objects.Add(entry.Value);
             }
         }

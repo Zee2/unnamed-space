@@ -37,7 +37,8 @@ namespace Utilities {
     }
     public enum ReservedPrefabIDs : ushort {
         Unspecified = 0,
-        Database = 1
+        Database = 1,
+        Player = 5
     }
 
     public enum CoordinatorStatus {

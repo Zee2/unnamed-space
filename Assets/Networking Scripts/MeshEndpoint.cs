@@ -104,6 +104,8 @@ public class MeshEndpoint : MonoBehaviour {
                 meshnet.InitializeDatabaseClientside(incomingPacket);
                 return;
             }
+        }else if(incomingPacket.GetPacketType() == PacketType.KickPacket) {
+            meshnet.initiateDisconnect();
         }
         
         //If the packet is neither a PlayerJoin or a DatabaseUpdate
@@ -123,10 +125,11 @@ public class MeshEndpoint : MonoBehaviour {
         
     }
 
-    public void SendDirectToSteamID(MeshPacket packet, CSteamID id) {
+    public void SendDirectToSteamID(MeshPacket packet, ulong id) {
+        CSteamID steamID = new CSteamID(id);
         Debug.Log("Direct sending. You sure you want to do this?");
         byte[] data = packet.GetSerializedBytes();
-        SteamNetworking.SendP2PPacket(id, data, (uint)data.Length, EP2PSend.k_EP2PSendReliable);
+        SteamNetworking.SendP2PPacket(steamID, data, (uint)data.Length, EP2PSend.k_EP2PSendReliable);
     }
 
     public void Send(MeshPacket packet) {
