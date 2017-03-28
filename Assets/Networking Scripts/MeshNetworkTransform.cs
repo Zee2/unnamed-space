@@ -214,10 +214,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     return;
                 }
                 */
-
-                velocity = (updatedPosition - thisRigidbody.position) * (1 / lastInterval);
-                thisRigidbody.velocity = velocity;
-                return;
+                
 
 
                 //physcorrect = "offset applications per second"
@@ -234,7 +231,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 
                 thisRigidbody.MovePosition(thisRigidbody.position + currentOffset);
-                thisRigidbody.velocity = thisRigidbody.velocity + currentVelocityOffset;
+                velocity = thisRigidbody.velocity + currentVelocityOffset;
+                thisRigidbody.velocity = velocity;
                 thisRigidbody.MoveRotation(thisRigidbody.rotation * currentRotationOffset);
 
 
@@ -243,8 +241,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 //Construct the current angular velocity quaternion, and add the current offset, and then convert back to angleAxis
                 (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
                 thisRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
-
-                velocity = thisRigidbody.velocity;
+                
                 position = thisRigidbody.position;
                 rotation = thisRigidbody.rotation;
                 v = thisRigidbody.angularVelocity;

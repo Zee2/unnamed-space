@@ -69,8 +69,12 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     }
 
     public void RoutePacket(MeshPacket p) {
-        if(meshnetReference == null) {
+        if (meshnetReference == null) {
             Debug.LogError("Identity trying to route packet without meshnet reference");
+            return;
+        }
+        if(p.GetSourceObjectId() != GetObjectID()) {
+            Debug.LogError("Wrong MNI used to route packet");
             return;
         }
         meshnetReference.RoutePacket(p);

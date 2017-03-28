@@ -12,9 +12,9 @@ public class IdentityContainer : MonoBehaviour {
         if(identity != null) {
             
             identity.attachedComponents = new List<IReceivesPacket<MeshPacket>>();
-            identity.attachedComponents.AddRange(gameObject.GetComponents<IReceivesPacket<MeshPacket>>());
+            identity.attachedComponents.AddRange(gameObject.GetComponentsInChildren<IReceivesPacket<MeshPacket>>(true));
 
-
+            
             foreach (IReceivesPacket<MeshPacket> c in identity.attachedComponents) {
                 Debug.Log("Component: " + c.GetType());
                 if(c is INetworked<MeshNetworkIdentity>) {
@@ -25,6 +25,7 @@ public class IdentityContainer : MonoBehaviour {
                     Debug.LogError("An attached component does not support the INetworked interface!");
                 }
             }
+            
         }
         else {
             Debug.LogError("This container's MeshNetworkIdentity doesn't exist. Something very weird just happened.");

@@ -97,5 +97,10 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         
         
     }
+
+    public bool ScheduleChange(MeshNetworkIdentity id, StateChange change) {
+        IDContainer dummyContainer = new IDContainer();
+        return ScheduleChange(id, change, ref dummyContainer);
+    }
     
 }

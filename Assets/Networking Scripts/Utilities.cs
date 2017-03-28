@@ -113,6 +113,9 @@ namespace Utilities {
         public IDContainer(ushort i) {
             id = i;
         }
+        public IDContainer() {
+            id = (ushort)ReservedObjectIDs.Unspecified;
+        }
     }
 
 
@@ -208,7 +211,7 @@ namespace Utilities {
             return new Player(parts[0], ulong.Parse(parts[1]), parts[2]);
         }
 
-
+        
 
     }
 
@@ -242,6 +245,7 @@ namespace Utilities {
         private ulong targetPlayerId;
         private ushort srcObjectId;
         private ushort targetObjectId;
+        private byte subcomponentID;
         public EP2PSend qos;
 
 
@@ -254,20 +258,21 @@ namespace Utilities {
             targetObjectId = 0;
         }
         public MeshPacket(byte[] serializedData) { //Deserialize packet.
-            int bytesRead = 0;
-            type = (PacketType)serializedData[0];
-            bytesRead++;
-            srcPlayerId = BitConverter.ToUInt64(serializedData, 1);
-            bytesRead += 8;
-            targetPlayerId = BitConverter.ToUInt64(serializedData, 9);
-            bytesRead += 8;
-            srcObjectId = BitConverter.ToUInt16(serializedData, 17);
-            bytesRead += 2;
-            targetObjectId = BitConverter.ToUInt16(serializedData, 19);
-            bytesRead += 2;
-            contents = new byte[serializedData.Length - bytesRead];
-            Buffer.BlockCopy(serializedData, bytesRead, contents, 0, contents.Length);
-
+            int pointer = 0;
+            type = (PacketType)serializedData[pointer];
+            pointer++;
+            subcomponentID = serializedData[pointer];
+            pointer++;
+            srcPlayerId = BitConverter.ToUInt64(serializedData, pointer);
+            pointer += 8;
+            targetPlayerId = BitConverter.ToUInt64(serializedData, pointer);
+            pointer += 8;
+            srcObjectId = BitConverter.ToUInt16(serializedData, pointer);
+            pointer += 2;
+            targetObjectId = BitConverter.ToUInt16(serializedData, pointer);
+            pointer += 2;
+            contents = new byte[serializedData.Length - pointer];
+            Buffer.BlockCopy(serializedData, pointer, contents, 0, contents.Length);
         }
         public MeshPacket(byte[] contents, PacketType type, ulong srcPlayer, ulong targetPlayer, ushort srcObject, ushort targetObject) {
             this.contents = contents;
@@ -298,6 +303,13 @@ namespace Utilities {
         public void SetContents(byte[] contents) {
             this.contents = contents;
         }
+
+        public byte GetSubcomponentID() {
+            return subcomponentID;
+        }
+        public void SetSubcomponentID(byte id) {
+            subcomponentID = id;
+        }
         public ulong GetSourcePlayerId() {
             return srcPlayerId;
         }
@@ -326,8 +338,10 @@ namespace Utilities {
 
         public byte[] GetSerializedBytes() {
             int pointer = 0;
-            byte[] output = new byte[21 + contents.Length];
+            byte[] output = new byte[22 + contents.Length];
             output[pointer] = (byte)type;
+            pointer++;
+            output[pointer] = subcomponentID;
             pointer++;
             Buffer.BlockCopy(BitConverter.GetBytes(srcPlayerId), 0, output, pointer, 8);
             pointer += 8;

@@ -228,7 +228,6 @@ public class MeshNetwork : MonoBehaviour {
         
         game.EnterGame(lobby);
     }
-
     public void OnLobbyUpdate(LobbyChatUpdate_t pCallback) {
         if(pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeDisconnected ||
             pCallback.m_rgfChatMemberStateChange == (uint)EChatMemberStateChange.k_EChatMemberStateChangeLeft) {
@@ -239,6 +238,7 @@ public class MeshNetwork : MonoBehaviour {
     }
 
     public void RemovePlayerFromGame(ulong id) {
+        Debug.LogError("REMOVING PLAYER");
         if(database == null) {
             Debug.LogError("Can't clear out player without a database");
             return;
@@ -247,9 +247,10 @@ public class MeshNetwork : MonoBehaviour {
             return;
         }
         Player p = database.LookupPlayer(id);
-        if(p == null) {
+        if (p == null) {
             Debug.LogError("Can't find player");
         }
+        Debug.Log("Calling database method");
         database.RemovePlayer(p, true);
         MeshPacket packet = new MeshPacket();
         packet.SetPacketType(PacketType.KickPacket);
@@ -262,14 +263,14 @@ public class MeshNetwork : MonoBehaviour {
         MeshNetworkIdentity[] objectsToUnlock = database.QueryByOwner(id);
         for (int i = 0; i < objectsToUnlock.Length; i++) {
             if(objectsToUnlock[i].GetPrefabID() == (ushort)ReservedPrefabIDs.Player) {
-                database.RemoveObject(objectsToUnlock[i], true);
+                
+                scheduler.ScheduleChange(objectsToUnlock[i], StateChange.Removal);
             }
             else {
                 objectsToUnlock[i].SetLocked(false);
                 objectsToUnlock[i].SetOwnerID(GetLocalPlayerID());
-                database.ChangeObject(objectsToUnlock[i], true);
+                scheduler.ScheduleChange(objectsToUnlock[i], StateChange.Change);
             }
-            
         }
     }
 
