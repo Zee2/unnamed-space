@@ -24,6 +24,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public float BROADCAST_RATE = 2;
     public float physcorrect = 20;
     public float intervalFraction = 4;
+    public float fixedPacketInterval = 0.1f;
+    public float nudgeRatio = 0.1f;
     public bool useUnitySyncing = true;
     Transform thisTransform;
     Rigidbody thisRigidbody;
@@ -60,7 +62,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     float lastUpdateTime = 0;
     float lastBroadcastTime = 0;
 
-    float lastInterval = 0;
+    public float lastInterval = 0;
 
     Vector3 adjusted;
 
@@ -203,6 +205,19 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (lastInterval / intervalFraction);
 
             if (hasRigidbody && isKinematic == false) { //use physics
+
+                if (useUnitySyncing) {
+                    velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
+                    thisRigidbody.velocity = velocity;
+                    thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
+                    updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
+                    return;
+                }
+
+
+
+
+
                 //physcorrect = "offset applications per second"
                 currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.fixedDeltaTime;
                 currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.fixedDeltaTime;
@@ -238,15 +253,15 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 
 
                 if (useUnitySyncing) {
-                    velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / Mathf.Max(0.01f, lastInterval));
-                    thisRigidbody.velocity = velocity;
+                    velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
+                    //thisRigidbody.velocity = velocity;
                     thisRigidbody.MovePosition(thisRigidbody.position + velocity * Time.fixedDeltaTime);
                     thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
-                    updatedPosition += (updatedVelocity * Time.fixedDeltaTime * 0.1f);
+                    updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
                 }else {
                     velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                    //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f)) * 0;
-                    position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
+                    position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * 0.05f;
+                    //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
                     rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                     currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
@@ -303,7 +318,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     void ProcessUpdate(TransformUpdate t) {
         thisRigidbody.WakeUp();
-        lastInterval = Time.time - lastUpdateTime;
+        lastInterval = Mathf.Lerp(lastInterval, Time.time - lastUpdateTime, 0.5f);
         lastUpdateTime = Time.time;
         
         isKinematic = t.isKinematic;

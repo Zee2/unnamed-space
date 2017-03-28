@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class BasicMovementTest : MonoBehaviour {
     Rigidbody r;
+    public float speed;
     // Use this for initialization
     void Start() {
         r = gameObject.GetComponent<Rigidbody>();
     }
 	// Update is called once per frame
 	void FixedUpdate() {
-        r.MovePosition(4 * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
+        r.MovePosition(speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
         
     }
 }
