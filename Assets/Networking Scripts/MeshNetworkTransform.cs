@@ -242,8 +242,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f));
-                //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
+                //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * (1 - Mathf.Clamp(velocity.magnitude/5f, 0.95f, 1f)) * 0;
+                position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
 
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
@@ -264,7 +264,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     float TweenFunction(float input) {
-        
+        return input;
         return Mathf.Pow(input, 1.1f);
     }
 
@@ -299,7 +299,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         lastUpdateTime = Time.time;
         
         isKinematic = t.isKinematic;
-        beforeUpdatePosition = position;
+        beforeUpdatePosition = updatedPosition; //hmm
         beforeUpdateVelocity = velocity;
         beforeUpdateRotation = rotation;
         beforeUpdateRotationalVelocity = rotationalVelocity;
