@@ -9,8 +9,8 @@ public class BasicMovementTest : MonoBehaviour {
         r = gameObject.GetComponent<Rigidbody>();
     }
 	// Update is called once per frame
-	void Update() {
-        r.MovePosition(4 * Time.deltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
+	void FixedUpdate() {
+        r.MovePosition(4 * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + r.position);
         
     }
 }
