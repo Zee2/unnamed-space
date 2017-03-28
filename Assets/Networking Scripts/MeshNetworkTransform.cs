@@ -26,7 +26,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     public float intervalFraction = 4;
     public float fixedPacketInterval = 0.1f;
     public float nudgeRatio = 0.1f;
-    public bool useUnitySyncing = true;
+    public bool useUnitySyncing = false;
     Transform thisTransform;
     Rigidbody thisRigidbody;
     MeshNetworkIdentity thisIdentity;
@@ -205,7 +205,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (lastInterval / intervalFraction);
 
             if (hasRigidbody && isKinematic == false) { //use physics
-
+                /*
                 if (useUnitySyncing) {
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
                     thisRigidbody.velocity = velocity;
@@ -213,7 +213,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
                     return;
                 }
-
+                */
 
 
 
@@ -252,29 +252,32 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             else { //physicsless motion
                 
 
-                if (useUnitySyncing) {
+                /*
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
                     //thisRigidbody.velocity = velocity;
                     thisRigidbody.MovePosition(thisRigidbody.position + velocity * Time.fixedDeltaTime);
                     thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
                     updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
-                }else {
-                    velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                    position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * 0.05f;
-                    //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
+                */
+                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
+                    
+                updatedPosition += updatedVelocity * Time.fixedDeltaTime * 1;
+                //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * nudgeRatio;
+                position += (updatedPosition - position) * nudgeRatio;
+                //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
+                    
+                rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
+                currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
+                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
-                    rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
-                    currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
-                    rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
-
-                    if (hasRigidbody) {
-                        thisRigidbody.MovePosition(position);
-                        thisRigidbody.MoveRotation(rotation);
-                    } else {
-                        thisTransform.position = position;
-                        thisTransform.localRotation = rotation;
-                    }
+                if (hasRigidbody) {
+                    thisRigidbody.MovePosition(position);
+                    thisRigidbody.MoveRotation(rotation);
+                } else {
+                    thisTransform.position = position;
+                    thisTransform.localRotation = rotation;
                 }
+            }
 
                 
 
@@ -282,7 +285,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 
                     
                 
-            }
+            
         }
     }
 
