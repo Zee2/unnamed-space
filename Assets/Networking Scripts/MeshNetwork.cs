@@ -80,7 +80,7 @@ public class MeshNetwork : MonoBehaviour {
         //Testing.DebugDatabaseSerialization();
         //Testing.BitTesting();
         //Testing.TransactionTesting();
-
+        Testing.DebugPackets();
         p.SerializeFull();
         
         networkUIController = gameObject.GetComponent<UIController>();

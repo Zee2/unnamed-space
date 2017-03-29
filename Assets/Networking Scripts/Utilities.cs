@@ -40,6 +40,9 @@ namespace Utilities {
         Database = 1,
         Player = 5
     }
+    public enum ReservedSubcomponentIDs : byte {
+        Root = 0
+    }
 
     public enum CoordinatorStatus {
         Uninitialized,
@@ -692,7 +695,10 @@ namespace Utilities {
     //All networked components must implement this.
     public interface IReceivesPacket<MeshPacket> {
         void ReceivePacket(MeshPacket p);
+        void SetSubcomponentID(byte id);
+        byte GetSubcomponentID();
     }
+
     public interface IMeshSerializable {
         byte[] GetSerializedBytes();
     }
@@ -783,6 +789,21 @@ namespace Utilities {
                 Debug.Log("privateKey: " + player.GetPrivateKey());
                 i++;
             }
+        }
+
+        public static void DebugPackets() {
+            MeshPacket p = new MeshPacket();
+            p.SetSourceObjectId(5);
+            p.SetTargetObjectId(10);
+            p.SetSourcePlayerId(1234);
+            p.SetTargetPlayerId(4321);
+            p.SetSubcomponentID(2);
+            p.SetPacketType(PacketType.DatabaseUpdate);
+            p.SetContents(new byte[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 });
+            byte[] buffer = p.GetSerializedBytes();
+            MeshPacket newPacket = new MeshPacket(buffer);
+            Debug.Log(newPacket.GetTargetObjectId());
+            Debug.Log(newPacket.GetPacketType());
         }
 
         public static void ProfileSerialization() {

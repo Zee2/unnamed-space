@@ -4,7 +4,6 @@ using UnityEngine;
 using Utilities;
 
 [RequireComponent(typeof(Transform))]
-[RequireComponent(typeof(IdentityContainer))]
 public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, INetworked<MeshNetworkIdentity> {
 
 
@@ -15,54 +14,56 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     */
 
+    public byte subcomponentID;
+
     //not networked
-    public int VELOCITY_SAMPLE_SIZE = 4;
-    public int ROTATION_SAMPLE_SIZE = 4;
-    public int INTERP_DELAY_MILLISECONDS = 50;
-    public float unityInterpolateMovement = 1.0f;
-    public float unityInterpolateRotation = 1.0f;
-    public float BROADCAST_RATE = 2;
-    public float physcorrect = 20;
+    public bool useRawRigidbodyAngularVelocity = true;
+    public int rotationSampleSize = 4;
+    public float standardLerpDuration = 0.08f;
+    public float broadcastRate = 2;
+    public float physcorrect = 8;
     public float intervalFraction = 4;
-    public float fixedPacketInterval = 0.1f;
-    public float nudgeRatio = 0.1f;
-    public bool useUnitySyncing = false;
+    public float nudgeRatio = 0.14f;
     Transform thisTransform;
     Rigidbody thisRigidbody;
+    public Rigidbody proxyRigidbody; //used for non-rigidbody objects like VR controllers and heads
+
+    Rigidbody workingRigidbody; //references whichever rigidbody we should be using (owner only)
+
     MeshNetworkIdentity thisIdentity;
-    bool hasRigidbody;
+    public bool hasRigidbody;
 
     MeshPacket outgoingPacket = new MeshPacket();
     TransformUpdate outgoingUpdate = new TransformUpdate();
 
     //Shadow position variables
 
-        Vector3 beforeUpdatePosition = Vector3.zero;
-        Vector3 updatedPosition = Vector3.zero;
-        Vector3 currentOffset = Vector3.zero;
+    Vector3 beforeUpdatePosition = Vector3.zero;
+    Vector3 updatedPosition = Vector3.zero;
+    Vector3 currentOffset = Vector3.zero;
 
     //Shadow velocity variables
 
-        Vector3 beforeUpdateVelocity = Vector3.zero;
-        Vector3 updatedVelocity = Vector3.zero;
-        Vector3 currentVelocityOffset;
+    Vector3 beforeUpdateVelocity = Vector3.zero;
+    Vector3 updatedVelocity = Vector3.zero;
+    Vector3 currentVelocityOffset;
 
     //Shadow rotation variables
 
-        Quaternion beforeUpdateRotation;
-        Quaternion updatedRotation;
-        Quaternion currentRotationOffset;
+    Quaternion beforeUpdateRotation;
+    Quaternion updatedRotation;
+    Quaternion currentRotationOffset;
 
     //Shadow rotation velocity variables
 
-        Quaternion beforeUpdateRotationalVelocity;
-        Quaternion updatedRotationalVelocity;
-        Quaternion currentRotationalVelocityOffset;
+    Quaternion beforeUpdateRotationalVelocity;
+    Quaternion updatedRotationalVelocity;
+    Quaternion currentRotationalVelocityOffset;
 
     float lastUpdateTime = 0;
     float lastBroadcastTime = 0;
 
-    public float lastInterval = 0;
+    float lastInterval = 0;
 
     Vector3 adjusted;
 
@@ -71,13 +72,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     //Master calculation variables
 
-        
 
-        Vector3 velocityAverage;
-        Vector3 lastVelocity;
-        Vector3 lastPosition;
-        Queue<Vector3> velocityBuffer = new Queue<Vector3>();
-        Vector3[] velocityCopyBuffer;
+
+    Vector3 velocityAverage;
+    Vector3 lastVelocity;
+    Vector3 lastPosition;
+    Queue<Vector3> velocityBuffer = new Queue<Vector3>();
+    Vector3[] velocityCopyBuffer;
 
     Quaternion rotationalVelocityAverage;
     Quaternion lastRotationalVelocity;
@@ -89,29 +90,27 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     Vector3 position;
     public Vector3 velocity;
     public Vector3 acceleration; //only used with kinematic bodies
-    Quaternion rotation;
-    Quaternion rotationalVelocity;
+    public Quaternion rotation;
+    public Quaternion rotationalVelocity;
 
     bool isKinematic;
+
+    public void SetSubcomponentID(byte id) {
+        subcomponentID = id;
+    }
+    public byte GetSubcomponentID() {
+        return subcomponentID;
+    }
 	
     void OnEnable() {
-        velocityBuffer = new Queue<Vector3>(VELOCITY_SAMPLE_SIZE);
-        for (int i = 0; i < VELOCITY_SAMPLE_SIZE; i++) {
-            velocityBuffer.Enqueue(Vector3.zero);
-        }
-        velocityCopyBuffer = new Vector3[VELOCITY_SAMPLE_SIZE];
         
-        rotationalVelocityBuffer = new Queue<Quaternion>(ROTATION_SAMPLE_SIZE);
-        for (int i = 0; i < VELOCITY_SAMPLE_SIZE; i++) {
+        rotationalVelocityBuffer = new Queue<Quaternion>(rotationSampleSize);
+        for (int i = 0; i < rotationSampleSize; i++) {
             rotationalVelocityBuffer.Enqueue(Quaternion.identity);
         }
-        rotationalVelocityCopyBuffer = new Quaternion[VELOCITY_SAMPLE_SIZE];
+        rotationalVelocityCopyBuffer = new Quaternion[rotationSampleSize];
 
-        if (GetComponent<Rigidbody>() == null) {
-            Debug.Log("Enabling non-physics network transform");
-            hasRigidbody = false;
-        }
-        else {
+        if (GetComponent<Rigidbody>() != null) {
             thisRigidbody = GetComponent<Rigidbody>();
             hasRigidbody = true;
         }
@@ -120,6 +119,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     void OnDrawGizmos() {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(position, position + velocity);
+        Gizmos.DrawLine(position, position + Vector3.up * 0.5f);
         Gizmos.color = Color.blue;
         Gizmos.DrawLine(position, position + acceleration);
         Gizmos.color = Color.green;
@@ -131,7 +131,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 	// Update is called once per frame
 	void FixedUpdate () {
         if(GetIdentity() == null) {
-            return;
+            //return;
             //Probably not set up yet.
         }
         
@@ -139,31 +139,38 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisTransform = GetComponent<Transform>();
         }
 
-        if (GetIdentity().IsLocallyOwned()) { //if we are the authority
-            if (hasRigidbody) {
+        if (true || GetIdentity().IsLocallyOwned()) { //if we are the authority
+
+            if(proxyRigidbody != null) {
+                hasRigidbody = true;
+                workingRigidbody = proxyRigidbody;
+                isKinematic = proxyRigidbody.isKinematic;
+            }else if(thisRigidbody != null) {
+                hasRigidbody = true;
+                workingRigidbody = thisRigidbody;
                 isKinematic = thisRigidbody.isKinematic;
-
+            }else {
+                hasRigidbody = false;
+                isKinematic = true;
             }
-            else {
-                isKinematic = false;
-            }
-
-            position = thisTransform.localPosition; //this may need changing to work with zoning
-            rotation = thisTransform.localRotation;
+            
             
             if (hasRigidbody && isKinematic == false) {
-                
-                velocity = thisRigidbody.velocity;
-                Vector3 v = thisRigidbody.angularVelocity;
+                position = thisTransform.localPosition; //this may need changing to work with zoning
+                rotation = thisTransform.localRotation;
+                velocity = workingRigidbody.velocity;
+                Vector3 v = workingRigidbody.angularVelocity;
                 float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
-            else {
-            
+            else if(hasRigidbody) {
+                position = workingRigidbody.position; //this may need changing to work with zoning
+                rotation = workingRigidbody.rotation;
+                /*
                 velocityBuffer.Dequeue();
 
                 
-                velocityBuffer.Enqueue((thisRigidbody.position - lastPosition) / Time.fixedDeltaTime);
+                velocityBuffer.Enqueue((workingRigidbody.position - lastPosition) / Time.fixedDeltaTime);
 
                 velocityBuffer.CopyTo(velocityCopyBuffer, 0);
                 velocityAverage = Vector3.zero;
@@ -173,7 +180,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 velocityAverage /= velocityCopyBuffer.Length;
 
                 //velocity = velocityAverage;
-                velocity = thisRigidbody.velocity;
+                */
+                velocity = workingRigidbody.velocity;
                 
                 lastPosition = position;
                 lastVelocity = velocity;
@@ -188,20 +196,26 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.Slerp(Quaternion.identity, rotationalVelocityAverage, (float)(1 / rotationalVelocityCopyBuffer.Length));
                 
                 lastRotation = rotation;
-                
 
+
+            }else {
+                position = thisTransform.localPosition;
+                rotation = thisTransform.localRotation;
+                lastRotationalVelocity = rotationalVelocity;
+                lastPosition = position;
+                lastVelocity = velocity;
+                lastRotation = rotation;
             }
-            if(Time.fixedTime - lastBroadcastTime > (float)(1 / BROADCAST_RATE)) {
+            if(Time.fixedTime - lastBroadcastTime > (float)(1 / broadcastRate)) {
                 lastBroadcastTime = Time.fixedTime;
                 BroadcastUpdate();
                 
             }
         }
         else { //if we are the shadow (2edgy4me)
-
             thisRigidbody.isKinematic = isKinematic;
 
-            float timeFraction = ((Time.fixedTime - lastUpdateTime) * 1000) / INTERP_DELAY_MILLISECONDS;
+            float timeFraction = (Time.fixedTime - lastUpdateTime) / standardLerpDuration;
             float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (lastInterval / intervalFraction);
 
             if (hasRigidbody && isKinematic == false) { //use physics
@@ -345,6 +359,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     void BroadcastUpdate() {
+        return;
         if(GetIdentity().IsLocallyOwned() == false) {
             Debug.LogError("Not authorized to broadcast updates");
         }

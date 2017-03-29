@@ -35,7 +35,7 @@ public class VoipTransmitter : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         and compression codecs. 
     */
 
-
+    byte subcomponentID;
     public MeshNetworkIdentity thisObjectIdentity;
 
     //Too high or too low WILL cause issues.
@@ -86,6 +86,13 @@ public class VoipTransmitter : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     NAudio.Codecs.G722Codec g722;
 
+
+    public byte GetSubcomponentID() {
+        return subcomponentID;
+    }
+    public void SetSubcomponentID(byte id) {
+        subcomponentID = id;
+    }
 
     public void SetIdentity(MeshNetworkIdentity id) {
         thisObjectIdentity = id;

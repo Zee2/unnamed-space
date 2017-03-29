@@ -118,6 +118,7 @@ public class MeshEndpoint : MonoBehaviour {
         MeshNetworkIdentity targetObject = meshnet.database.LookupObject(incomingPacket.GetTargetObjectId());
         if (targetObject == null) {
             Debug.LogError("Packet's target object doesn't exist on the database!");
+            //Debug.LogError("type = " + incomingPacket.GetPacketType() + ", sourceObject = " + incomingPacket.GetSourceObjectId() + ", source player = " + incomingPacket.GetSourcePlayerId() + ", target object = " + incomingPacket.GetTargetObjectId());
             return;
         }
 
@@ -128,12 +129,14 @@ public class MeshEndpoint : MonoBehaviour {
     public void SendDirectToSteamID(MeshPacket packet, ulong id) {
         CSteamID steamID = new CSteamID(id);
         Debug.Log("Direct sending. You sure you want to do this?");
+        //Debug.Log("Dest. object: " + packet.GetTargetObjectId());
         byte[] data = packet.GetSerializedBytes();
         SteamNetworking.SendP2PPacket(steamID, data, (uint)data.Length, EP2PSend.k_EP2PSendReliable);
     }
 
     public void Send(MeshPacket packet) {
-        if(meshnet.database == null) {
+        //Debug.Log("Send(): Dest. object: " + packet.GetTargetObjectId());
+        if (meshnet.database == null) {
             Debug.LogError("Trying to send packet when database does not exist.");
         }
 

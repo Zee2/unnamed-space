@@ -6,7 +6,7 @@ using Utilities;
 [RequireComponent(typeof(NetworkDatabase))]
 public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, INetworked<MeshNetworkIdentity> {
 
-
+    byte subcomponentID;
     public const float TRANSACTION_TIMEOUT = 10;
     ushort lastID = 0;
     MeshNetworkIdentity thisObjectIdentity;
@@ -16,12 +16,20 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     float lastTimerCheck = 0;
     NetworkDatabase netDB;
 
+    public byte GetSubcomponentID() {
+        return subcomponentID;
+    }
+    public void SetSubcomponentID(byte id) {
+        subcomponentID = id;
+    }
+
 	void OnEnable() {
         netDB = GetComponent<NetworkDatabase>();
         if(netDB == null) {
             Debug.LogError("StateChangeScheduler could not acquire database reference");
         }
     }
+
 
     void Update() {
         if(Time.time - lastTimerCheck > 5f) {
@@ -74,7 +82,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     public bool ScheduleChange(MeshNetworkIdentity id, StateChange change, ref IDContainer idReference) {
-        
+        //Debug.Log("Schedule change: my identity has objectID = " + GetIdentity().GetObjectID());
         if(GetIdentity().meshnetReference.database == null) {
             Debug.LogError("Can't schedule a state change without an active database");
             return false;
@@ -88,6 +96,7 @@ public class StateChangeScheduler : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         MeshPacket p = new MeshPacket();
         p.SetContents(transaction.GetSerializedBytes());
         p.SetPacketType(PacketType.DatabaseChangeRequest);
+        //Debug.Log("Setting packet with source object ID = " + GetIdentity().GetObjectID());
         p.SetSourceObjectId(GetIdentity().GetObjectID());
         p.SetSourcePlayerId(GetIdentity().meshnetReference.GetLocalPlayerID());
         p.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);

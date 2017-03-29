@@ -45,6 +45,13 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     //attached to the relevant object will wind up in this List<>.
     public List<IReceivesPacket<MeshPacket>> attachedComponents;
 
+    public byte GetSubcomponentID() {
+        return (byte)ReservedSubcomponentIDs.Root;
+    }
+    public void SetSubcomponentID(byte id) {
+        return;
+    }
+
     public MeshNetworkIdentity(ushort objectID, ushort prefabID, ulong ownerID, bool locked) {
         this.objectID = objectID;
         this.prefabID = prefabID;
@@ -69,12 +76,13 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
     }
 
     public void RoutePacket(MeshPacket p) {
+        //Debug.Log("Routing packet through objectID = " + GetObjectID() + ", destinationObject = " + p.GetTargetObjectId());
         if (meshnetReference == null) {
             Debug.LogError("Identity trying to route packet without meshnet reference");
             return;
         }
         if(p.GetSourceObjectId() != GetObjectID()) {
-            Debug.LogError("Wrong MNI used to route packet");
+            Debug.LogError("Wrong MNI used to route packet: srcID = " + p.GetSourceObjectId() + ", thisID = " + GetObjectID());
             return;
         }
         meshnetReference.RoutePacket(p);

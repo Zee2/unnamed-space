@@ -3,10 +3,28 @@ using System.Collections.Generic;
 using UnityEngine;
 using Utilities;
 
+[ExecuteInEditMode]
 public class IdentityContainer : MonoBehaviour {
 
-    
+
     public MeshNetworkIdentity identity;
+    float timeLastAssignedSubIDs = 0;
+
+    void Update() {
+        if (Application.isEditor && Application.isPlaying == false && Time.time - timeLastAssignedSubIDs > 1) {
+            timeLastAssignedSubIDs = Time.time;
+            byte count = 5;
+            foreach(IReceivesPacket<MeshPacket> sub in gameObject.GetComponentsInChildren<IReceivesPacket<MeshPacket>>()) {
+                sub.SetSubcomponentID(count);
+                count++;
+                Debug.Log("Setting id");
+                if(count == byte.MaxValue) {
+                    Debug.LogError("Too many subcomponents (scripts that implement IReceivePacket)");
+                    return;
+                }
+            }
+        }
+    }
 
     public void PopulateComponents() {
         if(identity != null) {
@@ -20,6 +38,8 @@ public class IdentityContainer : MonoBehaviour {
                 if(c is INetworked<MeshNetworkIdentity>) {
                     INetworked<MeshNetworkIdentity> networked = c as INetworked<MeshNetworkIdentity>;
                     networked.SetIdentity(identity);
+                    //Debug.Log("Setting identity with objectID = " + identity.GetObjectID());
+                    
                 }
                 else {
                     Debug.LogError("An attached component does not support the INetworked interface!");

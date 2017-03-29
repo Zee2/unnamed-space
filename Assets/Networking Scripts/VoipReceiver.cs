@@ -31,7 +31,7 @@ public class VoipReceiver : MonoBehaviour, IReceivesPacket<MeshPacket>, INetwork
 
 
     */
-
+    byte subcomponentID;
     public MeshNetworkIdentity thisObjectIdentity;
 
     public float volume;
@@ -46,6 +46,13 @@ public class VoipReceiver : MonoBehaviour, IReceivesPacket<MeshPacket>, INetwork
     //On-object audio source
     AudioSource audioSource;
     int writtenSamples = 0;
+
+    public byte GetSubcomponentID() {
+        return subcomponentID;
+    }
+    public void SetSubcomponentID(byte id) {
+        subcomponentID = id;
+    }
 
     public void SetIdentity(MeshNetworkIdentity i) {
         thisObjectIdentity = i;

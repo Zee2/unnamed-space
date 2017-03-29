@@ -31,6 +31,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
     */
 
+    byte subcomponentID;
     public const ushort OBJECT_ID_MIN = 10;
     public const ushort OBJECT_ID_MAX = 100;
     ushort lastObjectIDAssigned = OBJECT_ID_MIN;
@@ -44,6 +45,13 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
     //Serialized below here.
     private Dictionary<ulong, Player> playerList = new Dictionary<ulong, Player>();
     private Dictionary<ushort, MeshNetworkIdentity> objectList = new Dictionary<ushort, MeshNetworkIdentity>();
+
+    public byte GetSubcomponentID() {
+        return subcomponentID;
+    }
+    public void SetSubcomponentID(byte id) {
+        subcomponentID = id;
+    }
 
     //Entirely destroy the database records.
     //For obvious reasons, try avoid doing this unless you know what you're doing.
@@ -709,7 +717,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         packet.SetPacketType(PacketType.DatabaseChangeEcho);
         packet.SetContents(echo.GetSerializedBytes());
         packet.SetTargetPlayerId(destinationPlayer);
-        packet.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
+        packet.SetSourceObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         packet.SetSourcePlayerId(GetIdentity().GetOwnerID());
         packet.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         GetIdentity().RoutePacket(packet);
