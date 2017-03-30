@@ -4,13 +4,14 @@ using UnityEngine;
 
 public class PlayerPhysicsManager : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
-	}
+    public Transform headTransform;
+    Rigidbody playerRigidbody;
+	void OnEnable() {
+        playerRigidbody = gameObject.GetComponent<Rigidbody>();
+    }
 	
 	// Update is called once per frame
 	void Update () {
-		
+        playerRigidbody.centerOfMass = headTransform.localPosition;
 	}
 }

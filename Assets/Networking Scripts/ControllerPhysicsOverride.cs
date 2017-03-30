@@ -9,6 +9,12 @@ public class ControllerPhysicsOverride : MonoBehaviour {
     MeshNetworkTransform mnt;
     Vector3 angVel;
 	// Use this for initialization
+    void OnEnable() {
+        Rigidbody r = gameObject.GetComponent<Rigidbody>();
+        if(r != null) {
+            Destroy(r);
+        }
+    }
 	void Start () {
         o = GetComponent<SteamVR_TrackedObject>();
         if (o == null) {
