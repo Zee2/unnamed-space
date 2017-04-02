@@ -10,10 +10,7 @@ public class ControllerPhysicsOverride : MonoBehaviour {
     Vector3 angVel;
 	// Use this for initialization
     void OnEnable() {
-        Rigidbody r = gameObject.GetComponent<Rigidbody>();
-        if(r != null) {
-            Destroy(r);
-        }
+        
     }
 	void Start () {
         o = GetComponent<SteamVR_TrackedObject>();
@@ -22,8 +19,8 @@ public class ControllerPhysicsOverride : MonoBehaviour {
         }
         device = SteamVR_Controller.Input((int)o.index);
         mnt = GetComponent<MeshNetworkTransform>();
-        
-	}
+        mnt.ShouldUseRigidbody = false;
+    }
 	
 	// Update is called once per frame
 	void Update () {

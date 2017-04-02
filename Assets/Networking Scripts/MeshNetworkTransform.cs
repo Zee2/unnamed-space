@@ -31,8 +31,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     Rigidbody workingRigidbody; //references whichever rigidbody we should be using (owner only)
 
     MeshNetworkIdentity thisIdentity;
-    public bool hasRigidbody;
-
+    bool hasRigidbody;
+    public bool ShouldUseRigidbody = true;
     MeshPacket outgoingPacket = new MeshPacket();
     TransformUpdate outgoingUpdate = new TransformUpdate();
 
@@ -141,71 +141,82 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         if (true || GetIdentity().IsLocallyOwned()) { //if we are the authority
 
-            if(proxyRigidbody != null) {
-                hasRigidbody = true;
-                workingRigidbody = proxyRigidbody;
-                isKinematic = proxyRigidbody.isKinematic;
-            }else if(thisRigidbody != null) {
-                hasRigidbody = true;
-                workingRigidbody = thisRigidbody;
-                isKinematic = thisRigidbody.isKinematic;
-            }else {
-                hasRigidbody = false;
-                isKinematic = true;
-            }
-            
-            
-            if (hasRigidbody && isKinematic == false) {
-                position = thisTransform.localPosition; //this may need changing to work with zoning
-                rotation = thisTransform.localRotation;
-                velocity = workingRigidbody.velocity;
-                Vector3 v = workingRigidbody.angularVelocity;
-                float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
-                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
-            }
-            else if(hasRigidbody) {
-                position = workingRigidbody.position; //this may need changing to work with zoning
-                rotation = workingRigidbody.rotation;
-                /*
-                velocityBuffer.Dequeue();
-
-                
-                velocityBuffer.Enqueue((workingRigidbody.position - lastPosition) / Time.fixedDeltaTime);
-
-                velocityBuffer.CopyTo(velocityCopyBuffer, 0);
-                velocityAverage = Vector3.zero;
-                for(byte i = 0; i < velocityCopyBuffer.Length; i++) {
-                    velocityAverage += velocityCopyBuffer[i];
-                }
-                velocityAverage /= velocityCopyBuffer.Length;
-
-                //velocity = velocityAverage;
-                */
-                velocity = workingRigidbody.velocity;
-                
-                lastPosition = position;
-                lastVelocity = velocity;
-                
-                rotationalVelocityBuffer.Dequeue();
-                rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation)*rotation, 1/Time.fixedDeltaTime));
-                rotationalVelocityBuffer.CopyTo(rotationalVelocityCopyBuffer, 0);
-                rotationalVelocityAverage = Quaternion.identity;
-                for (byte i = 0; i < rotationalVelocityCopyBuffer.Length; i++) {
-                    rotationalVelocityAverage *= rotationalVelocityCopyBuffer[i];
-                }
-                rotationalVelocity = Quaternion.Slerp(Quaternion.identity, rotationalVelocityAverage, (float)(1 / rotationalVelocityCopyBuffer.Length));
-                
-                lastRotation = rotation;
-
-
-            }else {
+            if(ShouldUseRigidbody == false) {
                 position = thisTransform.localPosition;
                 rotation = thisTransform.localRotation;
                 lastRotationalVelocity = rotationalVelocity;
                 lastPosition = position;
                 lastVelocity = velocity;
                 lastRotation = rotation;
+            }else {
+                if (proxyRigidbody != null) {
+                    hasRigidbody = true;
+                    workingRigidbody = proxyRigidbody;
+                    isKinematic = proxyRigidbody.isKinematic;
+                } else if (thisRigidbody != null) {
+                    hasRigidbody = true;
+                    workingRigidbody = thisRigidbody;
+                    isKinematic = thisRigidbody.isKinematic;
+                } else {
+                    hasRigidbody = false;
+                    isKinematic = true;
+                }
+
+
+                if (hasRigidbody && isKinematic == false) {
+                    position = thisTransform.localPosition; //this may need changing to work with zoning
+                    rotation = thisTransform.localRotation;
+                    velocity = workingRigidbody.velocity;
+                    Vector3 v = workingRigidbody.angularVelocity;
+                    float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                    rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+                } else if (hasRigidbody) {
+                    position = workingRigidbody.position; //this may need changing to work with zoning
+                    rotation = workingRigidbody.rotation;
+                    /*
+                    velocityBuffer.Dequeue();
+
+
+                    velocityBuffer.Enqueue((workingRigidbody.position - lastPosition) / Time.fixedDeltaTime);
+
+                    velocityBuffer.CopyTo(velocityCopyBuffer, 0);
+                    velocityAverage = Vector3.zero;
+                    for(byte i = 0; i < velocityCopyBuffer.Length; i++) {
+                        velocityAverage += velocityCopyBuffer[i];
+                    }
+                    velocityAverage /= velocityCopyBuffer.Length;
+
+                    //velocity = velocityAverage;
+                    */
+                    velocity = workingRigidbody.velocity;
+
+                    lastPosition = position;
+                    lastVelocity = velocity;
+
+                    rotationalVelocityBuffer.Dequeue();
+                    rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation) * rotation, 1 / Time.fixedDeltaTime));
+                    rotationalVelocityBuffer.CopyTo(rotationalVelocityCopyBuffer, 0);
+                    rotationalVelocityAverage = Quaternion.identity;
+                    for (byte i = 0; i < rotationalVelocityCopyBuffer.Length; i++) {
+                        rotationalVelocityAverage *= rotationalVelocityCopyBuffer[i];
+                    }
+                    rotationalVelocity = Quaternion.Slerp(Quaternion.identity, rotationalVelocityAverage, (float)(1 / rotationalVelocityCopyBuffer.Length));
+
+                    lastRotation = rotation;
+
+
+                } else {
+                    position = thisTransform.localPosition;
+                    rotation = thisTransform.localRotation;
+                    lastRotationalVelocity = rotationalVelocity;
+                    lastPosition = position;
+                    lastVelocity = velocity;
+                    lastRotation = rotation;
+                }
             }
+
+
+            
             if(Time.fixedTime - lastBroadcastTime > (float)(1 / broadcastRate)) {
                 lastBroadcastTime = Time.fixedTime;
                 BroadcastUpdate();

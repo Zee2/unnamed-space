@@ -90,7 +90,7 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
 
     public bool IsLocallyOwned() {
         if (meshnetReference == null) {
-            Debug.LogError("Meshnet reference missing");
+            Debug.LogError("Meshnet offline");
             return false;
         }
         if (meshnetReference.GetLocalPlayerID() == GetOwnerID()) {
@@ -98,6 +98,14 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
         }else {
             return false;
         }
+    }
+
+    public ulong GetLocalPlayerID() {
+        if (meshnetReference == null) {
+            Debug.LogError("Meshnet offline");
+            return (ulong)ReservedPlayerIDs.Unspecified;
+        }
+        return meshnetReference.GetLocalPlayerID();
     }
     //Performs a deep copy of the given MNI and applies it to the existing object, preserving active pointers
     //Preserves the existing MeshNetwork reference and the existing list of attached components

@@ -4,13 +4,11 @@ using UnityEngine;
 
 public class HelmetToggle : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
-	}
-	
-	// Update is called once per frame
-	void Update () {
-		
-	}
+    public Animator helmetController;
+
+    void OnTriggerEnter(Collider c) {
+        if (c.CompareTag("Hand")) {
+            helmetController.SetTrigger("HelmetTrigger");
+        }
+    }
 }

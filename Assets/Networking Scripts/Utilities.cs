@@ -72,7 +72,8 @@ namespace Utilities {
         DatabaseChangeRequest = 12,
         DatabaseChangeEcho = 13,
         TransformUpdate = 20,
-        KickPacket = 30
+        KickPacket = 30,
+        GenericStateUpdate = 40
 
     }
 
@@ -236,7 +237,8 @@ namespace Utilities {
             PacketType.PlayerJoin,
             PacketType.DatabaseChangeEcho,
             PacketType.DatabaseChangeRequest,
-            PacketType.KickPacket });
+            PacketType.KickPacket,
+            PacketType.GenericStateUpdate });
         public static readonly List<PacketType> NO_DELAY_TYPES = new List<PacketType>(new PacketType[]{
             PacketType.VOIP,
             PacketType.TransformUpdate });
@@ -691,7 +693,35 @@ namespace Utilities {
             return t;
         }
     }
-    
+
+    public class PropUpdate : IMeshSerializable {
+        
+        public bool isUsed;
+
+        public PropUpdate(bool used) {
+            isUsed = used;
+        }
+        public PropUpdate() {
+            isUsed = false;
+        }
+
+        public byte[] GetSerializedBytes() {
+            byte[] output = new byte[1];
+            if (isUsed)
+                output[0] = 1;
+            else
+                output[0] = 0;
+            return output;
+
+        }
+
+
+        public static PropUpdate ParseSerializedBytes(byte[] data) {
+            PropUpdate p = new PropUpdate();
+            p.isUsed = (data[0] == 1);
+            return p;
+        }
+    }
     //All networked components must implement this.
     public interface IReceivesPacket<MeshPacket> {
         void ReceivePacket(MeshPacket p);

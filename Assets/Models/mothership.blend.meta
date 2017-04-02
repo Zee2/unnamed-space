@@ -9,19 +9,149 @@ ModelImporter:
     100002: //RootNode
     100004: polySurface11_polySurface12
     100006: polySurface11_polySurface12_001
+    100008: Cube_002
+    100010: Cube_004
+    100012: Cube_005
+    100014: Plane
+    100016: Plane_001
+    100018: Plane_002
+    100020: Plane_003
+    100022: Plane_004
+    100024: Plane_005
+    100026: Plane_006
+    100028: Plane_007
+    100030: Plane_008
+    100032: Plane_009
+    100034: Plane_010
+    100036: Plane_011
+    100038: polySurface11_polySurface12_002
+    100040: polySurface11_polySurface12_003
+    100042: polySurface11_polySurface12_004
+    100044: polySurface11_polySurface12_005
+    100046: polySurface11_polySurface12_006
+    100048: polySurface11_polySurface12_007
+    100050: Ship
+    100052: Plane_012
+    100054: Cube_000
+    100056: Cube_001
+    100058: Plane_013
     400000: Cube
     400002: //RootNode
     400004: polySurface11_polySurface12
     400006: polySurface11_polySurface12_001
+    400008: Cube_002
+    400010: Cube_004
+    400012: Cube_005
+    400014: Plane
+    400016: Plane_001
+    400018: Plane_002
+    400020: Plane_003
+    400022: Plane_004
+    400024: Plane_005
+    400026: Plane_006
+    400028: Plane_007
+    400030: Plane_008
+    400032: Plane_009
+    400034: Plane_010
+    400036: Plane_011
+    400038: polySurface11_polySurface12_002
+    400040: polySurface11_polySurface12_003
+    400042: polySurface11_polySurface12_004
+    400044: polySurface11_polySurface12_005
+    400046: polySurface11_polySurface12_006
+    400048: polySurface11_polySurface12_007
+    400050: Ship
+    400052: Plane_012
+    400054: Cube_000
+    400056: Cube_001
+    400058: Plane_013
     2300000: Cube
     2300002: polySurface11_polySurface12
     2300004: polySurface11_polySurface12_001
+    2300006: Cube_002
+    2300008: Cube_004
+    2300010: Cube_005
+    2300012: Plane
+    2300014: Plane_001
+    2300016: Plane_002
+    2300018: Plane_003
+    2300020: Plane_004
+    2300022: Plane_005
+    2300024: Plane_006
+    2300026: Plane_007
+    2300028: Plane_008
+    2300030: Plane_009
+    2300032: Plane_010
+    2300034: Plane_011
+    2300036: polySurface11_polySurface12_002
+    2300038: polySurface11_polySurface12_003
+    2300040: polySurface11_polySurface12_004
+    2300042: polySurface11_polySurface12_005
+    2300044: polySurface11_polySurface12_006
+    2300046: polySurface11_polySurface12_007
+    2300048: Ship
+    2300050: Plane_012
+    2300052: Cube_000
+    2300054: Cube_001
+    2300056: Plane_013
     3300000: Cube
     3300002: polySurface11_polySurface12
     3300004: polySurface11_polySurface12_001
+    3300006: Cube_002
+    3300008: Cube_004
+    3300010: Cube_005
+    3300012: Plane
+    3300014: Plane_001
+    3300016: Plane_002
+    3300018: Plane_003
+    3300020: Plane_004
+    3300022: Plane_005
+    3300024: Plane_006
+    3300026: Plane_007
+    3300028: Plane_008
+    3300030: Plane_009
+    3300032: Plane_010
+    3300034: Plane_011
+    3300036: polySurface11_polySurface12_002
+    3300038: polySurface11_polySurface12_003
+    3300040: polySurface11_polySurface12_004
+    3300042: polySurface11_polySurface12_005
+    3300044: polySurface11_polySurface12_006
+    3300046: polySurface11_polySurface12_007
+    3300048: Ship
+    3300050: Plane_012
+    3300052: Cube_000
+    3300054: Cube_001
+    3300056: Plane_013
     4300000: polySurface11_polySurface12_001
     4300002: polySurface11_polySurface12
     4300004: Cube
+    4300006: Plane_011
+    4300008: Plane_010
+    4300010: Cube_005
+    4300012: Cube_004
+    4300014: polySurface11_polySurface12_007
+    4300016: Plane_009
+    4300018: Plane_008
+    4300020: Ship
+    4300022: Cube_002
+    4300024: Plane_007
+    4300026: polySurface11_polySurface12_006
+    4300028: Plane_006
+    4300030: polySurface11_polySurface12_005
+    4300032: Plane_005
+    4300034: Plane_004
+    4300036: Plane_003
+    4300038: polySurface11_polySurface12_004
+    4300040: Plane_002
+    4300042: polySurface11_polySurface12_003
+    4300044: polySurface11_polySurface12_002
+    4300046: Plane_001
+    4300048: Plane
+    4300050: Plane_012
+    4300052: Cube_001
+    4300054: Cube_000
+    4300056: Plane_013
     7400000: Default Take
     9500000: //RootNode
   materials:
@@ -53,7 +183,7 @@ ModelImporter:
     addColliders: 0
     importBlendShapes: 1
     swapUVChannels: 0
-    generateSecondaryUV: 0
+    generateSecondaryUV: 1
     useFileUnits: 1
     optimizeMeshForGPU: 1
     keepQuads: 0

@@ -7,7 +7,7 @@ public class PhysicsDebugger : MonoBehaviour {
     public Vector3 physicsPosition;
     public Vector3 physicsVelocity;
     public Vector3 physicsAngVel;
-    bool shouldSleep = true;
+    public bool shouldSleep = true;
     Material mat;
 	// Use this for initialization
 	void Start () {
@@ -35,7 +35,13 @@ public class PhysicsDebugger : MonoBehaviour {
         }else {
             mat.color = Color.green;
         }
-	}
+
+        //r.centerOfMass += Vector3.right * Input.GetAxis("Horizontal") + Vector3.forward * Input.GetAxis("Vertical");
+        //r.ResetInertiaTensor();
+        //colliderDebugger.localPosition += Vector3.right * Input.GetAxis("Horizontal");
+        //colliderDebugger.localPosition += Vector3.forward * Input.GetAxis("Vertical");
+        //colliderDebugger.Rotate(Vector3.right, Input.GetAxis("Vertical Strafe") * 10);
+    }
 
     void FixedUpdate() {
         if (r.IsSleeping() != shouldSleep) {
@@ -48,5 +54,7 @@ public class PhysicsDebugger : MonoBehaviour {
 
     void OnDrawGizmos() {
         //Gizmos.DrawLine(physicsPosition, physicsPosition + physicsVelocity);
+        if(r != null)
+            Gizmos.DrawSphere(r.position+ r.centerOfMass, 0.3f);
     }
 }
