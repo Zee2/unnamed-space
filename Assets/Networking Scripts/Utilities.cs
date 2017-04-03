@@ -90,6 +90,54 @@ namespace Utilities {
         NoChange = 5
     }
 
+    public struct Vector3D {
+        public double x;
+        public double y;
+        public double z;
+
+
+        public Vector3D(double x, double y, double z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+        }
+        public Vector3D(float x, float y, float z) {
+            this.x = (double)x;
+            this.y = (double)y;
+            this.z = (double)z;
+        }
+        public Vector3D(Vector3 v) {
+            this.x = v.x;
+            this.y = v.y;
+            this.z = v.z;
+        }
+
+        public static Vector3D operator +(Vector3D v1, Vector3D v2){
+            return new Vector3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        }
+        public static Vector3D operator +(Vector3D v1, Vector3 v2) {
+            return new Vector3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        }
+        public static Vector3D operator +(Vector3 v1, Vector3D v2) {
+            return new Vector3D(v1.x + v2.x, v1.y + v2.y, v1.z + v2.z);
+        }
+
+        public static Vector3D operator -(Vector3D v1, Vector3D v2) {
+            return new Vector3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        }
+        public static Vector3D operator -(Vector3D v1, Vector3 v2) {
+            return new Vector3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        }
+        public static Vector3D operator -(Vector3 v1, Vector3D v2) {
+            return new Vector3D(v1.x - v2.x, v1.y - v2.y, v1.z - v2.z);
+        }
+
+        public static implicit operator Vector3(Vector3D v) {
+            return new Vector3((float)v.x, (float)v.y, (float)v.z);
+        }
+
+    }
+
     public struct GamePublishingInfo {
         public string name;
         public string password;

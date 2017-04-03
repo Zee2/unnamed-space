@@ -40,7 +40,7 @@ public class PhysicsGridManager : MonoBehaviour {
             return;
         if (registry.Count >= 2) {
             Gizmos.color = Color.green;
-            Gizmos.DrawSphere(GetRelativePosition(source, target, debugTransform.localPosition) + target.transform.position, 0.5f);
+            Gizmos.DrawSphere(GetRelativePosition(source, target, debugTransform.localPosition) + target.transform.position, 0.9f);
         }
     }
 

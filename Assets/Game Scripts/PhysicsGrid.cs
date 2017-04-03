@@ -1,23 +1,40 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Utilities;
 
 [RequireComponent(typeof(Collider))]
 public class PhysicsGrid : MonoBehaviour {
 
 
 
-
+    public Transform offsetSensor;
     public Transform proxy;
     public Vector3 gravity;
     public float gravityStrength;
     public bool radialGravity;
     public Transform gridTransform;
+
+    public double originX;
+    public double originY;
+    public double originZ;
+    public double x;
+    public double y;
+    public double z;
+    public Vector3D preciseWorldOffset;
+    public Vector3D currentWorldOrigin = new Vector3D();
+
+    PhysicsGrid parentGrid;
+
     Dictionary<GameObject, Rigidbody> objectsInGrid = new Dictionary<GameObject, Rigidbody>();
     List<GameObject> objectsToRemove = new List<GameObject>();
     const int FIND_NEXT_GRID_ITERATIONS = 20;
 	// Use this for initialization
 	void Start () {
+        preciseWorldOffset = new Vector3D(transform.localPosition);
+        x = preciseWorldOffset.x;
+        y = preciseWorldOffset.y;
+        z = preciseWorldOffset.z;
         gridTransform = transform;
 	}
 	
@@ -42,19 +59,45 @@ public class PhysicsGrid : MonoBehaviour {
         
 	}
     void Update() {
+
+        //preciseWorldOffset.x = x;
+        //preciseWorldOffset.y = y;
+        //preciseWorldOffset.z = z;
+        if (offsetSensor != null && offsetSensor.localPosition.magnitude > 5) {
+            preciseWorldOffset = preciseWorldOffset + offsetSensor.localPosition;
+            for(int i = 0; i < gridTransform.childCount; i++) {
+                gridTransform.GetChild(i).localPosition -= offsetSensor.localPosition;
+            }
+        }
+        
+        currentWorldOrigin.x = originX;
+        currentWorldOrigin.y = originY;
+        currentWorldOrigin.z = originZ;
+        
+
+        if (proxy != null) {
+            preciseWorldOffset = new Vector3D(proxy.localPosition) + FindHigherGrid().currentWorldOrigin;
+        }
+
+        parentGrid = FindHigherGrid();
+        if(parentGrid != null) {
+            gridTransform.localPosition = preciseWorldOffset - FindHigherGrid().currentWorldOrigin;
+        }
+        
         /*
         foreach(GameObject g in objectsInGrid.Keys) {
             if(g.transform.parent != gridTransform) {
-                objectsToRemove.Add(g);
+                objectsToRemove.Add(g =
             }
         }
         for(int i = 0; i < objectsToRemove.Count; i++) {
             objectsInGrid.Remove(objectsToRemove[i]);
         }
         */
-        if(proxy != null) {
-            gridTransform.position = proxy.position;
-        }
+        
+
+
+        
     }
 
     void OnDrawGizmos() {
