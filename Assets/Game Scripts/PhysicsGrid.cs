@@ -14,6 +14,7 @@ public class PhysicsGrid : MonoBehaviour {
     public bool radialGravity;
     public Transform gridTransform;
     Dictionary<GameObject, Rigidbody> objectsInGrid = new Dictionary<GameObject, Rigidbody>();
+    List<GameObject> objectsToRemove = new List<GameObject>();
     const int FIND_NEXT_GRID_ITERATIONS = 20;
 	// Use this for initialization
 	void Start () {
@@ -23,7 +24,7 @@ public class PhysicsGrid : MonoBehaviour {
 	// Update is called once per frame
 	void FixedUpdate () {
 		foreach(KeyValuePair<GameObject, Rigidbody> entry in objectsInGrid) {
-            if(entry.Value != null) {
+            if(entry.Value != null && entry.Key.transform.parent == gridTransform) {
                 if (!entry.Value.IsSleeping()) {
 
                     if (radialGravity) {
@@ -41,6 +42,16 @@ public class PhysicsGrid : MonoBehaviour {
         
 	}
     void Update() {
+        /*
+        foreach(GameObject g in objectsInGrid.Keys) {
+            if(g.transform.parent != gridTransform) {
+                objectsToRemove.Add(g);
+            }
+        }
+        for(int i = 0; i < objectsToRemove.Count; i++) {
+            objectsInGrid.Remove(objectsToRemove[i]);
+        }
+        */
         if(proxy != null) {
             gridTransform.position = proxy.position;
         }
@@ -61,7 +72,7 @@ public class PhysicsGrid : MonoBehaviour {
     void OnTriggerExit(Collider c) {
         if (objectsInGrid.ContainsKey(c.gameObject)) {
             objectsInGrid.Remove(c.gameObject);
-            PhysicsGrid g = FindNextGrid();
+            PhysicsGrid g = FindHigherGrid();
             if(g == null) {
                 c.transform.parent = null;
             }else {
@@ -70,7 +81,7 @@ public class PhysicsGrid : MonoBehaviour {
         }
     }
 
-    PhysicsGrid FindNextGrid() {
+    PhysicsGrid FindHigherGrid() {
         Transform t = gridTransform.parent;
         int counter = 0;
         while (true) {

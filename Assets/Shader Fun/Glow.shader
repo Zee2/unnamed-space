@@ -87,7 +87,7 @@ Category {
 				fixed4 col = _Color1;
 				
 				//i.color.a = 1;
-				float sceneZ = clamp(0.04 + LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos))), -100, 100);
+				float sceneZ = 0.04 + LinearEyeDepth (SAMPLE_DEPTH_TEXTURE_PROJ(_CameraDepthTexture, UNITY_PROJ_COORD(i.projPos)));
 				float partZ = i.projPos.z;
 				float fade = saturate (pow(_InvFade * (sceneZ-partZ), _DepthPower));
 				//col.a = fade;
