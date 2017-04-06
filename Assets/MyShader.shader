@@ -91,7 +91,7 @@
 			// Albedo comes from a texture tinted by color
 			fixed3 temp;
 			float4 temp1 = float4(IN.uv_MainTex.x, IN.uv_MainTex.y, 0,2);
-			fixed4 main = tex2Dbias (_MainTex, temp1);
+			fixed4 main = tex2D (_MainTex, IN.uv_MainTex);
 			fixed4 paint = tex2D(_PaintTex, IN.uv_PaintTex);
 			fixed4 custom = tex2D(_CustomTex, IN.uv_CustomTex);
 			fixed4 metal = tex2D(_MetalTex, IN.uv_MetalTex);
