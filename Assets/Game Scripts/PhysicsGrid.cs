@@ -4,33 +4,47 @@ using UnityEngine;
 using Utilities;
 
 [RequireComponent(typeof(Collider))]
+[RequireComponent(typeof(ZonedTransform))]
 public class PhysicsGrid : MonoBehaviour {
 
     public bool enableBoundaries = true; //this should be false on the world grid, as objects should never be able to leave.
 
     public Transform offsetSensor;
-    public Transform proxy;
+    public GameObject proxy;
+    ZonedTransform proxyZT;
+    MeshNetworkIdentity thisMNI;
+    bool hasIdentityContainer = false;
     public Vector3 gravity;
     public float gravityStrength;
     public bool radialGravity;
     Transform gridTransform;
+    ZonedTransform gridZonedTransform;
     public Vector3D currentWorldOrigin = new Vector3D();
-
-    PhysicsGrid parentGrid;
-
+    
+    PhysicsGridManager manager;
     Dictionary<GameObject, Rigidbody> objectsInGrid = new Dictionary<GameObject, Rigidbody>();
-    List<GameObject> objectsInside = new List<GameObject>();
+
+    ushort GridID; //copied from proxy MNI
+
     const int FIND_NEXT_GRID_ITERATIONS = 20;
     // Use this for initialization
     void Start() {
+        manager = FindObjectOfType<PhysicsGridManager>();
+        if(manager == null) {
+            Debug.LogError("No physics grid manager found in scene!");
+        }
+        else {
+            Debug.Log("Gridmanager name = " + manager.name);
+        }
         gridTransform = transform;
+        gridZonedTransform = GetComponent<ZonedTransform>();
         if (enableBoundaries == false) {
             ZonedTransform[] transforms = FindObjectsOfType<ZonedTransform>(); //Find all orphan zones and claim them!
             foreach(ZonedTransform z in transforms) {
+                objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>()); //Everybody is the child of this grid.
                 if(z.transform.parent == null) {
                     Debug.Log("Un-orphaning objct with name " + z.gameObject.name);
-                    objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>());
-                    z.gameObject.SendMessage("NotifyZoneEnter", this);
+                    z.SetGrid(this);
                 }
             }
             Collider[] colliders = GetComponents<Collider>();
@@ -40,6 +54,37 @@ public class PhysicsGrid : MonoBehaviour {
                 }
             }
         }
+        foreach(ZonedTransform z in GetComponentsInChildren<ZonedTransform>()) {
+            if(z.transform.parent == gridTransform) {
+                if(objectsInGrid.ContainsKey(z.gameObject) == false) {
+                    objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>());
+                }
+            }
+        }
+
+        if (proxy != null)
+            proxyZT = proxy.GetComponent<ZonedTransform>();
+        if (gameObject.GetComponent<IdentityContainer>() != null) {
+            hasIdentityContainer = true;
+        }
+        else {
+            if (proxy != null) {
+                if (proxy.GetComponent<IdentityContainer>() != null) {
+                    hasIdentityContainer = true;
+                }
+            }
+        }
+    }
+
+    
+    public void OnTransformParentChanged() {
+        StartCoroutine(RebuildTreeRoutine());
+    }
+
+    IEnumerator RebuildTreeRoutine() {
+        while (manager == null)
+            yield return new WaitForEndOfFrame();
+        manager.RebuildTree();
     }
 
     // Update is called once per frame
@@ -64,14 +109,57 @@ public class PhysicsGrid : MonoBehaviour {
     }
 
     void Update() {
-        if (offsetSensor != null && offsetSensor.localPosition.magnitude > 20) {
-            currentWorldOrigin = currentWorldOrigin + offsetSensor.localPosition;
-            //for (int i = 0; i < gridTransform.childCount; i++) {
-            //gridTransform.GetChild(i).localPosition -= offsetSensor.localPosition;
-            //}
+        if (offsetSensor != null && (offsetSensor.position - gridTransform.position).magnitude > 200) {
+            Vector3 localDelta = gridTransform.worldToLocalMatrix * (offsetSensor.position - gridTransform.position);
+            currentWorldOrigin = currentWorldOrigin + localDelta;
+            for (int i = 0; i < gridTransform.childCount; i++) {
+                gridTransform.GetChild(i).localPosition -= localDelta;
+            }
+        }
+
+        if (thisMNI == null && hasIdentityContainer) {
+            IdentityContainer c = gameObject.GetComponent<IdentityContainer>();
+            if (c == null && proxy != null) {
+                c = proxy.GetComponent<IdentityContainer>();
+            }
+            if (c == null) {
+                thisMNI = null;
+            }
+            else {
+                thisMNI = c.GetIdentity();
+            }
         }
     }
 
+    public void LateUpdate() {
+        if (proxy != null && proxyZT != null) { //if we have a proxy, and that proxy has a zone transform
+            gridZonedTransform.parentGrid = proxyZT.parentGrid;
+            gridTransform.localPosition = proxyZT.transform.localPosition;
+            gridTransform.localRotation = proxyZT.transform.localRotation;
+        }
+        else if (proxy != null) {
+            gridTransform.position = proxy.transform.position;
+            gridTransform.rotation = proxy.transform.rotation;
+        }
+
+    }
+
+    public ushort GetGridID() {
+        if(proxy == null) {
+            Debug.LogError("Grid has no proxy, cannot retrieve GridID");
+            return (ushort)ReservedObjectIDs.Unspecified;
+        }
+        else {
+            IdentityContainer c = proxy.gameObject.GetComponent<IdentityContainer>();
+            if(c != null) {
+                return c.GetIdentity().GetObjectID();
+            }
+            else {
+                Debug.Log("Proxy has no MeshNetworkIdentity");
+                return (ushort)ReservedObjectIDs.Unspecified;
+            }
+        }
+    }
     
 
 
@@ -79,61 +167,50 @@ public class PhysicsGrid : MonoBehaviour {
         Gizmos.DrawSphere(transform.position + gravity, 0.4f);
     }
 
-    void OnTriggerEnter(Collider c) {
-        if (!objectsInside.Contains(c.gameObject))
-            objectsInside.Add(c.gameObject);
 
-
-        if (!objectsInGrid.ContainsKey(c.gameObject)) {
-            c.gameObject.SendMessage("NotifyZoneEnter", this);
-        }
+    public bool Contains(ZonedTransform z) {
+        return objectsInGrid.ContainsKey(z.gameObject);
     }
-    public void ConfirmObjectEnter(ZonedTransform z) {
-        if (z.transform.parent != gridTransform) {
-            z.transform.parent = gridTransform;
-        }
-        if(objectsInGrid.ContainsKey(z.gameObject) == false)
-            objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>());
+
+    void OnTriggerEnter(Collider c) {
+        Debug.Log("Grid trigger enter!");
+        if(objectsInGrid.ContainsKey(c.gameObject) == false)
+            objectsInGrid.Add(c.gameObject, c.GetComponent<Rigidbody>());
+        c.gameObject.SendMessage("OnSuggestZoneEnter", this);
+        
+    }
+    public void OnConfirmObjectEnter(ZonedTransform z) {
+        
+        if (z.GetComponent<PhysicsGrid>() != null && manager != null)
+            manager.RebuildTree();
     }
     public void NotifyObjectEnter(ZonedTransform z) {
         if(objectsInGrid.ContainsKey(z.gameObject) == false) {
             objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>());
         }
+        if (z.GetComponent<PhysicsGrid>() != null && manager != null)
+            manager.RebuildTree();
     }
 
 
     void OnTriggerExit(Collider c) {
-        
-        if (objectsInside.Contains(c.gameObject))
-            objectsInside.Remove(c.gameObject);
-        if (objectsInGrid.ContainsKey(c.gameObject)) {
-            c.gameObject.SendMessage("NotifyZoneExit", this);
-            /*
+        if(objectsInGrid.ContainsKey(c.gameObject))
             objectsInGrid.Remove(c.gameObject);
-            PhysicsGrid g = FindHigherGrid();
-            if(g == null) {
-                c.transform.parent = null;
-            }else {
-                c.transform.parent = g.transform;
-            }
-            */
-        }
+        c.gameObject.SendMessage("OnSuggestZoneExit", this);
+        
     }
     public void ConfirmObjectExit(ZonedTransform z) {
         
-        if (z.transform.parent == gridTransform) {
-            z.transform.parent = FindHigherGrid().transform;
-        }
-        if (objectsInGrid.ContainsKey(z.gameObject)) {
-            objectsInGrid.Remove(z.gameObject);
-        }
+        if (z.GetComponent<PhysicsGrid>() != null && manager != null)
+            manager.RebuildTree();
         //SendMessageUpwards("RefreshListing");
     }
     public void NotifyObjectExit(ZonedTransform z) {
-        return;
         if (objectsInGrid.ContainsKey(z.gameObject)) {
             objectsInGrid.Remove(z.gameObject);
         }
+        if (z.GetComponent<PhysicsGrid>() != null && manager != null)
+            manager.RebuildTree();
     }
 
     PhysicsGrid FindHigherGrid() {

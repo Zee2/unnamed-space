@@ -46,6 +46,7 @@ public class IdentityContainer : MonoBehaviour {
                 }
             }
             
+            
         }
         else {
             Debug.LogError("This container's MeshNetworkIdentity doesn't exist. Something very weird just happened.");

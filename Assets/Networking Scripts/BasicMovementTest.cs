@@ -21,7 +21,9 @@ public class BasicMovementTest : MonoBehaviour {
         //if (transform.parent != null)
         //forceVector = transform.parent.localToWorldMatrix * forceVector;
         //r.AddForce(forceVector * speed);
-        transform.Translate(Vector3.right * Input.GetAxis("Horizontal") * speed);
+        r.AddForce(transform.parent.localToWorldMatrix * (Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+        //transform.Translate(Vector3.right * Input.GetAxis("Horizontal"))
+        
         //g.preciseWorldOffset += Vector3.right * Input.GetAxis("Horizontal") * speed;
         //z.SetPrecisePosition(z.precisePosition + Vector3.right * Input.GetAxis("Horizontal") * speed);
     }
