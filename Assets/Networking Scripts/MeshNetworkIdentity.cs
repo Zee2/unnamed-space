@@ -71,7 +71,10 @@ public class MeshNetworkIdentity : IReceivesPacket<MeshPacket>, IMeshSerializabl
             Debug.Log("This MeshNetworkIdentity has no associated components! Forgot to populate it?");
         }
         foreach(IReceivesPacket<MeshPacket> component in attachedComponents) {
-            component.ReceivePacket(p);
+            if (p.GetSubcomponentID() == (byte)ReservedSubcomponentIDs.Unspecified)
+                component.ReceivePacket(p);
+            else if(p.GetSubcomponentID() == component.GetSubcomponentID())
+                component.ReceivePacket(p);
         }
     }
 

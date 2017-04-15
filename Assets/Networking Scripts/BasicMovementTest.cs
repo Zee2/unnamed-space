@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 
 public class BasicMovementTest : MonoBehaviour {
-    Rigidbody r;
-    public float speed;
+    public Rigidbody r;
+    public float speed = 4;
     PhysicsGrid g;
     ZonedTransform z;
     // Use this for initialization
@@ -13,17 +13,28 @@ public class BasicMovementTest : MonoBehaviour {
         g = gameObject.GetComponent<PhysicsGrid>();
         z = gameObject.GetComponent<ZonedTransform>();
     }
-	// Update is called once per frame
-	void FixedUpdate() {
-        //r.MovePosition(speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + transform.localPosition);
+    void OnEnable() {
+        r = gameObject.GetComponent<Rigidbody>();
+        g = gameObject.GetComponent<PhysicsGrid>();
+        z = gameObject.GetComponent<ZonedTransform>();
+    }
+    // Update is called once per frame
+    void FixedUpdate() {
+        r.MovePosition(speed  * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + transform.localPosition);
         //Vector3 forceVector = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"));
 
         //if (transform.parent != null)
         //forceVector = transform.parent.localToWorldMatrix * forceVector;
         //r.AddForce(forceVector * speed);
-        r.AddForce(transform.parent.localToWorldMatrix * (Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+        //if(transform.parent == null) {
+            //r.AddForce((Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+
+        //}else {
+            //r.AddForce(transform.parent.localToWorldMatrix * (Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+
+        //}
         //transform.Translate(Vector3.right * Input.GetAxis("Horizontal"))
-        
+
         //g.preciseWorldOffset += Vector3.right * Input.GetAxis("Horizontal") * speed;
         //z.SetPrecisePosition(z.precisePosition + Vector3.right * Input.GetAxis("Horizontal") * speed);
     }

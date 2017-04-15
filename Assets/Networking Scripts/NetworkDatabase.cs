@@ -570,7 +570,8 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
                 GetIdentity().meshnetReference.GetLocalPlayerID(),
                 GetIdentity().GetOwnerID(),
                 GetIdentity().GetObjectID(),
-                GetIdentity().GetObjectID());
+                GetIdentity().GetObjectID(),
+                GetSubcomponentID());
             GetIdentity().RoutePacket(p);
         }else {
             //Debug.Log("Delta successful, hash matches");
@@ -720,6 +721,7 @@ public class NetworkDatabase : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
         packet.SetSourceObjectId((ushort)ReservedObjectIDs.DatabaseObject);
         packet.SetSourcePlayerId(GetIdentity().GetOwnerID());
         packet.SetTargetObjectId((ushort)ReservedObjectIDs.DatabaseObject);
+        packet.SetSubcomponentID(GetSubcomponentID());
         GetIdentity().RoutePacket(packet);
     }
     

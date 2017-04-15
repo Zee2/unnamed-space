@@ -351,7 +351,8 @@ public class MeshNetwork : MonoBehaviour {
             SteamUser.GetSteamID().m_SteamID,
             SteamMatchmaking.GetLobbyOwner(lobby).m_SteamID,
             (byte)ReservedObjectIDs.Unspecified,
-            (byte)ReservedObjectIDs.DatabaseObject);
+            (byte)ReservedObjectIDs.DatabaseObject,
+            (byte)ReservedSubcomponentIDs.Unspecified);
 
         p.qos = EP2PSend.k_EP2PSendReliable;
         RoutePacketDirect(p, p.GetTargetPlayerId());

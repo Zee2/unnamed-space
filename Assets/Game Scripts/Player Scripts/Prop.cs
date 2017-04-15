@@ -47,11 +47,10 @@ public class Prop : InteractableObject, INetworked<MeshNetworkIdentity>, IReceiv
 
     public override void SetBeingUsed(bool used) {
         if(IsBeingUsed() != used) {
-            base.SetBeingUsed(used);
             if(GetIdentity() != null) {
                 if (GetIdentity().IsLocallyOwned() == false)
                     return;
-
+                base.SetBeingUsed(used);
                 MeshPacket p = new MeshPacket();
                 p.SetContents(new PropUpdate(used).GetSerializedBytes());
                 p.SetTargetObjectId(GetIdentity().GetObjectID());

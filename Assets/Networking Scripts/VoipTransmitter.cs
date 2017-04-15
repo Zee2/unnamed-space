@@ -219,7 +219,7 @@ public class VoipTransmitter : MonoBehaviour, IReceivesPacket<MeshPacket>, INetw
 
             if(debugReceiver != null) {
                 Debug.Log("Sending " + compressedData.Count + " bytes");
-                debugReceiver.ReceivePacket(new MeshPacket(compressedData.ToArray(), PacketType.VOIP, 0, 0, 0, 0));
+                debugReceiver.ReceivePacket(new MeshPacket(compressedData.ToArray(), PacketType.VOIP, 0, 0, 0, 0, GetSubcomponentID()));
             }
 
 
