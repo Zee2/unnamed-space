@@ -423,6 +423,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         outgoingUpdate.isKinematic = isKinematic;
         outgoingUpdate.position = position; //Again, these are large world coordinates!
+        Debug.Log("Outgoing position = " + position.x + ", " + position.y + ", " + position.z);
         outgoingUpdate.velocity = velocity;
         outgoingUpdate.rotation = rotation;
         outgoingUpdate.rotationalVelocity = rotationalVelocity;
