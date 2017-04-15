@@ -20,7 +20,7 @@ public class BasicMovementTest : MonoBehaviour {
     }
     // Update is called once per frame
     void FixedUpdate() {
-        r.MovePosition(speed  * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + transform.localPosition);
+        r.MovePosition(speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))) + transform.localPosition);
         //Vector3 forceVector = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"));
 
         //if (transform.parent != null)
