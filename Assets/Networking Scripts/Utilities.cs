@@ -713,9 +713,9 @@ namespace Utilities {
         
         public static TransformUpdate ParseSerializedBytes(byte[] data) {
             TransformUpdate t = new TransformUpdate();
-            t.position.x = BitConverter.ToSingle(data, 0);
-            t.position.y = BitConverter.ToSingle(data, 8);
-            t.position.z = BitConverter.ToSingle(data, 16);
+            t.position.x = BitConverter.ToDouble(data, 0);
+            t.position.y = BitConverter.ToDouble(data, 8);
+            t.position.z = BitConverter.ToDouble(data, 16);
 
             t.velocity.x = BitConverter.ToSingle(data, 24);
             t.velocity.y = BitConverter.ToSingle(data, 28);
