@@ -410,7 +410,6 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     void BroadcastUpdate() {
-        return;
         if(GetIdentity().IsLocallyOwned() == false) {
             Debug.LogError("Not authorized to broadcast updates");
         }
