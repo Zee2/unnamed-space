@@ -681,9 +681,9 @@ namespace Utilities {
 
         public byte[] GetSerializedBytes() {
             byte[] output = new byte[3*3*4 + 2*4*4 + 1];
-            Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, output, 0, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, output, 8, 4);
-            Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, output, 16, 4);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, output, 0, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, output, 8, 8);
+            Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, output, 16, 8);
 
 
             Buffer.BlockCopy(BitConverter.GetBytes(velocity.x), 0, output, 24, 4);

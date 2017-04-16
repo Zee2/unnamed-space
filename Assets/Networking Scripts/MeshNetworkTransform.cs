@@ -395,6 +395,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position; //These are large world coordinates!!
+        Debug.Log("Incoming position = " + updatedPosition.x + ", " + updatedPosition.y + ", " + updatedPosition.z);
         updatedVelocity = t.velocity;
         updatedRotation = t.rotation;
         updatedRotationalVelocity = t.rotationalVelocity;

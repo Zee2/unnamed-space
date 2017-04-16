@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
+using Utilities;
 
 public class BasicMovementTest : MonoBehaviour {
     public Rigidbody r;
@@ -9,6 +11,7 @@ public class BasicMovementTest : MonoBehaviour {
     ZonedTransform z;
     // Use this for initialization
     void Start() {
+        
         r = gameObject.GetComponent<Rigidbody>();
         g = gameObject.GetComponent<PhysicsGrid>();
         z = gameObject.GetComponent<ZonedTransform>();
