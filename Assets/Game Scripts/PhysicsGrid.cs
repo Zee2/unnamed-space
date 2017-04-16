@@ -66,13 +66,19 @@ public class PhysicsGrid : MonoBehaviour {
             proxyZT = proxy.GetComponent<ZonedTransform>();
         if (gameObject.GetComponent<IdentityContainer>() != null) {
             hasIdentityContainer = true;
+            GridID = gameObject.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
         }
         else {
             if (proxy != null) {
                 if (proxy.GetComponent<IdentityContainer>() != null) {
                     hasIdentityContainer = true;
+                    GridID = proxy.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
                 }
             }
+        }
+
+        if (hasIdentityContainer == false) {
+            Debug.LogWarning("Physics grid " + name + " has no grid ID. Will not be able to be serialized across network.");
         }
     }
 

@@ -677,10 +677,10 @@ namespace Utilities {
         public Quaternion rotation;
         public Quaternion rotationalVelocity;
         public bool isKinematic;
-        
+        public ushort gridID;
 
         public byte[] GetSerializedBytes() {
-            byte[] output = new byte[3*3*4 + 2*4*4 + 1];
+            byte[] output = new byte[3*3*4 + 2*4*4 + 1 + 4];
             Buffer.BlockCopy(BitConverter.GetBytes(position.x), 0, output, 0, 8);
             Buffer.BlockCopy(BitConverter.GetBytes(position.y), 0, output, 8, 8);
             Buffer.BlockCopy(BitConverter.GetBytes(position.z), 0, output, 16, 8);
@@ -706,6 +706,7 @@ namespace Utilities {
             else {
                 output[68] = 0;
             }
+            Buffer.BlockCopy(BitConverter.GetBytes(gridID), 0, output, 69, 2);
             return output;
 
         }
@@ -732,6 +733,7 @@ namespace Utilities {
             t.rotationalVelocity.z = BitConverter.ToSingle(data, 64);
 
             t.isKinematic = (data[68] == 1);
+            t.gridID = BitConverter.ToUInt16(data, 69);
             return t;
         }
     }

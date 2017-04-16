@@ -180,6 +180,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         if (GetIdentity().IsLocallyOwned()) { //if we are the authority
             
+            
+
             if(ShouldUseRigidbody == false) {
                 position = GetPosition(false); //returns large world coordinates if we have them! :)
                 rotation = thisTransform.localRotation;
@@ -395,7 +397,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position; //These are large world coordinates!!
-        Debug.Log("Incoming position = " + updatedPosition.x + ", " + updatedPosition.y + ", " + updatedPosition.z);
+        //Debug.Log("Incoming position = " + updatedPosition.x + ", " + updatedPosition.y + ", " + updatedPosition.z);
         updatedVelocity = t.velocity;
         updatedRotation = t.rotation;
         updatedRotationalVelocity = t.rotationalVelocity;
@@ -406,6 +408,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             Vector3 axis;
             updatedRotationalVelocity.ToAngleAxis(out angle, out axis);
             thisRigidbody.angularVelocity = axis * angle * Mathf.Deg2Rad;
+        }
+
+        if (hasZonedTransform) {
+            if(t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
+                thisZonedTransform.SetGrid(t.gridID);
+            }
+            
         }
 
     }
@@ -424,10 +433,20 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         outgoingUpdate.isKinematic = isKinematic;
         outgoingUpdate.position = position; //Again, these are large world coordinates!
-        Debug.Log("Outgoing position = " + position.x + ", " + position.y + ", " + position.z);
+        //Debug.Log("Outgoing position = " + position.x + ", " + position.y + ", " + position.z);
         outgoingUpdate.velocity = velocity;
         outgoingUpdate.rotation = rotation;
         outgoingUpdate.rotationalVelocity = rotationalVelocity;
+        if (hasZonedTransform) {
+            if (thisZonedTransform.parentGrid != null)
+                outgoingUpdate.gridID = thisZonedTransform.parentGrid.GetGridID();
+            else
+                outgoingUpdate.gridID = (ushort)ReservedObjectIDs.Unspecified;
+        }
+        else {
+            outgoingUpdate.gridID = (ushort)ReservedObjectIDs.Unspecified;
+        }
+        
 
         outgoingPacket.SetContents(outgoingUpdate.GetSerializedBytes());
         thisIdentity.RoutePacket(outgoingPacket);

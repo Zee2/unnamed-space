@@ -39,25 +39,24 @@ public class ZonedTransform : MonoBehaviour{
     public void SetGrid(ushort id) {
         if (GetAuthorized() == false)
             return;
-        PhysicsGrid targetGrid = manager.GetGridByID(id);
-        if(targetGrid != null) {
 
-            parentGrid = targetGrid;
-            while (parentGrid.Contains(this) == false) {
-                parentGrid = manager.FindNextGrid(parentGrid);
-                
-            }
-            transform.parent = parentGrid.transform;
-        }
+        PhysicsGrid g = manager.GetGridByID(id);
+        SetGrid(g);
     }
 
     public void SetGrid(PhysicsGrid g) {
         if (GetAuthorized() == false)
             return;
+
+        if(parentGrid != null && parentGrid.GetGridID() == g.GetGridID()) {
+            Debug.Log("No zone change needed");
+            return;
+        }
         
         if(parentGrid == null && g != null) {
             parentGrid = g;
             transform.parent = parentGrid.transform;
+            parentGrid.SendMessage("ConfirmObjectEnter");
         }
         else {
             if (g != null) {
@@ -71,6 +70,7 @@ public class ZonedTransform : MonoBehaviour{
 
                 }
                 transform.parent = parentGrid.transform;
+                parentGrid.SendMessage("ConfirmObjectEnter");
             }
         }
 
