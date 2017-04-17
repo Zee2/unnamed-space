@@ -158,12 +158,12 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             return precisePosition;
         }
     }
-    /*
-    Vector3 ConvertPointToWorldCoordinates(Vector3D precisePosition) {
+    
+    Vector3 ConvertPointToWorldCoordinates(Vector3D precisePosition) { //takes in local, large world coordinates
         Vector3 localPosition = CompressPosition(precisePosition);
         if (hasZonedTransform) {
             if(thisZonedTransform.parentGrid != null) {
-                return thisZonedTransform.parentGrid.transform.localToWorldMatrix * localPosition;
+                return thisZonedTransform.parentGrid.transform.TransformPoint(localPosition);
             }
             else {
                 return localPosition;
@@ -173,12 +173,24 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             return localPosition;
         }
     }
-    */
-    
+    Quaternion ConvertRotationToWorldRotation(Quaternion localRotation) { //takes in local rotation
+        
+        if (hasZonedTransform) {
+            if (thisZonedTransform.parentGrid != null) {
+                return Quaternion.Inverse(thisZonedTransform.parentGrid.transform.rotation) * localRotation;
+            } else {
+                return localRotation;
+            }
+        } else {
+            return localRotation;
+        }
+    }
 
 
-	// Update is called once per frame
-	void FixedUpdate () {
+
+
+    // Update is called once per frame
+    void FixedUpdate () {
         if(GetIdentity() == null) {
             //return;
             //Probably not set up yet.
@@ -346,11 +358,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
                 if (hasRigidbody) {
-                    
-                    thisRigidbody.MovePosition(CompressPosition(position));
-                    thisRigidbody.MoveRotation(rotation);
+
+                    thisRigidbody.MovePosition(ConvertPointToWorldCoordinates(position));
+                    thisRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
                 } else {
-                    thisTransform.position = CompressPosition(position);
+                    thisTransform.localPosition = CompressPosition(position);
                     thisTransform.localRotation = rotation;
                 }
             }

@@ -37,7 +37,7 @@ public class PhysicsGrid : MonoBehaviour {
         else {
             Debug.Log("Gridmanager name = " + manager.name);
         }
-        manager.RebuildTree();
+        
         gridTransform = transform;
         gridZonedTransform = GetComponent<ZonedTransform>();
 
@@ -50,8 +50,7 @@ public class PhysicsGrid : MonoBehaviour {
         if(isRootGrid && GetComponent<IdentityContainer>() != null) {
             Debug.LogError("Root grid has an identity container. Root grids should not be networked!");
         }
-
-        ScanForGrids(); //if this is root, it will un-orphan any stray grids or objects
+        manager.RebuildTree(); //will also trigger ScanForGrids
 
         if (isRootGrid == false) {
             if (proxy != null) {
