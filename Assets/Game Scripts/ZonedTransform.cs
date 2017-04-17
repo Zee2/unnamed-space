@@ -14,6 +14,8 @@ public class ZonedTransform : MonoBehaviour{
 
     bool hasIdentityContainer = false;
 
+    public Vector3 rigidPositionDebug;
+    Rigidbody debugRigidbody;
 	// Use this for initialization
 	void Start () {
         thisTransform = transform;
@@ -26,7 +28,7 @@ public class ZonedTransform : MonoBehaviour{
         if(parentGrid == null) {
             Debug.Log("ZonedTransform does not have a parent grid, this should happen rarely");
         }
-        
+        debugRigidbody = GetComponent<Rigidbody>();
 	}
 
     public bool GetAuthorized() {
@@ -48,7 +50,7 @@ public class ZonedTransform : MonoBehaviour{
         if (GetAuthorized() == false)
             return;
 
-        if(parentGrid != null && parentGrid.GetGridID() == g.GetGridID()) {
+        if(parentGrid != null && parentGrid.GetGridID() != (ushort)Utilities.ReservedObjectIDs.Unspecified && parentGrid.GetGridID() == g.GetGridID()) {
             Debug.Log("No zone change needed");
             return;
         }
@@ -56,7 +58,7 @@ public class ZonedTransform : MonoBehaviour{
         if(parentGrid == null && g != null) {
             parentGrid = g;
             transform.parent = parentGrid.transform;
-            parentGrid.SendMessage("ConfirmObjectEnter");
+            parentGrid.SendMessage("OnConfirmObjectEnter", this);
         }
         else {
             if (g != null) {
@@ -70,7 +72,7 @@ public class ZonedTransform : MonoBehaviour{
 
                 }
                 transform.parent = parentGrid.transform;
-                parentGrid.SendMessage("ConfirmObjectEnter");
+                parentGrid.SendMessage("OnConfirmObjectEnter", this);
             }
         }
 
@@ -87,7 +89,7 @@ public class ZonedTransform : MonoBehaviour{
         if(grid == parentGrid) {
             return;
         }
-        if(manager.IsChildOf(grid, parentGrid) == false) { //if the grid we're entering is not a child of the current grid (overlapping collider issue)
+        if(parentGrid != null && manager.IsChildOf(grid, parentGrid) == false) { //if the grid we're entering is not a child of the current grid (overlapping collider issue)
             Debug.Log("Invalid transition: " + grid.name + " not a child of " + parentGrid.name);
             return;
         }
@@ -107,8 +109,10 @@ public class ZonedTransform : MonoBehaviour{
         grid.SendMessage("ConfirmObjectExit", this);
     }
 	
-    void Update() {
-        
+    public void FixedUpdate() {
+        if(debugRigidbody != null) {
+            rigidPositionDebug = debugRigidbody.velocity;
+        }
         
     }
 

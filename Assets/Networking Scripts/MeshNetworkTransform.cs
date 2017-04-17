@@ -134,27 +134,20 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         Gizmos.DrawSphere(CompressPosition(beforeUpdatePosition), 0.2f);
     }
 
-    Vector3D GetPosition(bool checkForRigidbody) { //returns accurate position whether we have a zoned transform or not
+    Vector3D GetPosition() { //returns accurate position whether we have a zoned transform or not
         if (hasZonedTransform) {
-            if(checkForRigidbody && hasRigidbody) {
-                if(thisZonedTransform.parentGrid != null) {
-                    return thisRigidbody.position + thisZonedTransform.parentGrid.currentWorldOrigin;
-                }else {
-                    return new Vector3D(thisRigidbody.position);
-                }
-            }else {
-                return thisZonedTransform.GetLargeWorldPosition();
-            }
+            
+            return thisZonedTransform.GetLargeWorldPosition();
+            
             
         }else {
-            if(checkForRigidbody && hasRigidbody) {
-                return new Vector3D(thisRigidbody.position);
-            }
+            
             return new Vector3D(thisTransform.localPosition);
         }
     }
 
     Vector3 CompressPosition(Vector3D precisePosition) { //converts from "large world" coordinates to "machine" coordinates
+        return precisePosition;
         if (hasZonedTransform) {
             if (thisZonedTransform.parentGrid != null)
                 return precisePosition - thisZonedTransform.parentGrid.currentWorldOrigin;
@@ -165,6 +158,23 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             return precisePosition;
         }
     }
+    /*
+    Vector3 ConvertPointToWorldCoordinates(Vector3D precisePosition) {
+        Vector3 localPosition = CompressPosition(precisePosition);
+        if (hasZonedTransform) {
+            if(thisZonedTransform.parentGrid != null) {
+                return thisZonedTransform.parentGrid.transform.localToWorldMatrix * localPosition;
+            }
+            else {
+                return localPosition;
+            }
+        }
+        else {
+            return localPosition;
+        }
+    }
+    */
+    
 
 
 	// Update is called once per frame
@@ -183,7 +193,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             
 
             if(ShouldUseRigidbody == false) {
-                position = GetPosition(false); //returns large world coordinates if we have them! :)
+                position = GetPosition(); //returns large world coordinates if we have them! :)
                 rotation = thisTransform.localRotation;
                 lastRotationalVelocity = rotationalVelocity;
                 lastPosition = position;
@@ -205,15 +215,15 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 if (hasRigidbody && (isKinematic == false)) {
-                    position = GetPosition(true); //returns large world coordinates if we have them
+                    position = GetPosition(); //returns large world coordinates if we have them
                     rotation = thisTransform.localRotation;
-                    velocity = workingRigidbody.velocity;
-                    Vector3 v = workingRigidbody.angularVelocity;
+                    velocity = thisTransform.InverseTransformDirection(workingRigidbody.velocity);
+                    Vector3 v = thisTransform.InverseTransformDirection(workingRigidbody.angularVelocity);
                     float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                     rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
                 } else if (hasRigidbody) { //we have a kinematic rigidbody
-                    position = GetPosition(true); //returns large world coordinates using rigidbody position
-                    rotation = workingRigidbody.rotation;
+                    position = GetPosition(); //returns large world coordinates using rigidbody position
+                    rotation = thisTransform.localRotation;
                     /*
                     velocityBuffer.Dequeue();
 
@@ -229,7 +239,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
                     //velocity = velocityAverage;
                     */
-                    velocity = workingRigidbody.velocity;
+                    velocity = thisTransform.InverseTransformDirection(workingRigidbody.velocity);
 
                     lastPosition = position;
                     lastVelocity = velocity;
@@ -247,7 +257,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 } else {
-                    position = GetPosition(false);
+                    position = GetPosition();
                     rotation = thisTransform.localRotation;
                     lastRotationalVelocity = rotationalVelocity;
                     lastPosition = position;
@@ -308,7 +318,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
                 thisRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
 
-                position = GetPosition(true);
+                position = GetPosition();
                 rotation = thisRigidbody.rotation;
                 v = thisRigidbody.angularVelocity;
                 angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
@@ -391,7 +401,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         lastUpdateTime = Time.time;
         
         isKinematic = t.isKinematic;
-        beforeUpdatePosition = GetPosition(true); //hmm
+        beforeUpdatePosition = GetPosition(); //hmm
         beforeUpdateVelocity = thisRigidbody.velocity;
         beforeUpdateRotation = thisRigidbody.rotation;
         beforeUpdateRotationalVelocity = rotationalVelocity;

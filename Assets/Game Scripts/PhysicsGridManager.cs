@@ -37,11 +37,11 @@ public class PhysicsGridManager : MonoBehaviour {
                 t = t.parent;
                 parentCounter++;
             }
-            Debug.Log("Initialized grid " + g.name + " with " + parentCounter + " parent grids.");
+            //Debug.Log("Initialized grid " + g.name + " with " + parentCounter + " parent grids.");
             gridcounter++;
 
         }
-        Debug.Log("Finished initializing " + gridcounter + " grids.");
+        //Debug.Log("Finished initializing " + gridcounter + " grids.");
     }
 
 

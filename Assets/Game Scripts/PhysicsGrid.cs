@@ -20,6 +20,7 @@ public class PhysicsGrid : MonoBehaviour {
     Transform gridTransform;
     ZonedTransform gridZonedTransform;
     public Vector3D currentWorldOrigin = new Vector3D();
+    public bool originTest;
     
     PhysicsGridManager manager;
     Dictionary<GameObject, Rigidbody> objectsInGrid = new Dictionary<GameObject, Rigidbody>();
@@ -50,7 +51,7 @@ public class PhysicsGrid : MonoBehaviour {
             Collider[] colliders = GetComponents<Collider>();
             foreach (Collider c in colliders) {
                 if (c.isTrigger) {
-                    c.enabled = false;
+                    //c.enabled = false; //fix later!!!!!!
                 }
             }
         }
@@ -115,6 +116,14 @@ public class PhysicsGrid : MonoBehaviour {
     }
 
     void Update() {
+        if (originTest) {
+            originTest = false;
+            Vector3 delta = new Vector3(1, 0, 1);
+            currentWorldOrigin = currentWorldOrigin + delta;
+            for (int i = 0; i < gridTransform.childCount; i++) {
+                gridTransform.GetChild(i).localPosition -= delta;
+            }
+        }
         if (offsetSensor != null && (offsetSensor.position - gridTransform.position).magnitude > 200) {
             Vector3 localDelta = gridTransform.worldToLocalMatrix * (offsetSensor.position - gridTransform.position);
             currentWorldOrigin = currentWorldOrigin + localDelta;
