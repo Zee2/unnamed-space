@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Utilities;
 
 public class PhysicsGridManager : MonoBehaviour {
 
@@ -18,6 +19,7 @@ public class PhysicsGridManager : MonoBehaviour {
     }
 
     void BuildTree() {
+        bool foundRootGridYet = false;
         PhysicsGrid[] grids = FindObjectsOfType<PhysicsGrid>();
         int gridcounter = 0;
         int parentCounter = 0;
@@ -37,16 +39,29 @@ public class PhysicsGridManager : MonoBehaviour {
                 t = t.parent;
                 parentCounter++;
             }
+            if (g.isRootGrid) {
+                if (foundRootGridYet) {
+                    Debug.LogError("MORE THAN ONE ROOT GRID!");
+
+                } else {
+                    g.ScanForGrids();
+                    foundRootGridYet = true;
+                }
+                
+            }
             //Debug.Log("Initialized grid " + g.name + " with " + parentCounter + " parent grids.");
             gridcounter++;
 
         }
-        //Debug.Log("Finished initializing " + gridcounter + " grids.");
+        Debug.Log("Finished initializing " + gridcounter + " grids.");
     }
 
 
     public void RebuildTree() {
         BuildTree();
+    }
+    public void TriggerRootScan() {
+        GetGridByID((ushort)ReservedObjectIDs.RootGrid).ScanForGrids();
     }
     public void OnDrawGizmos() {
         if (debugTransform == null || debugTransform.parentGrid == null || target == null)
@@ -151,6 +166,7 @@ public class PhysicsGridManager : MonoBehaviour {
     }
 
     public PhysicsGrid FindNextGrid(PhysicsGrid grid) {
+        Debug.Log("GridManager.FindNextGrid(" + grid.gameObject.name + ")");
         if (registry.ContainsKey(grid) == false) {
             Debug.LogError("Registry can't find grid " + grid.gameObject.name);
             return null;

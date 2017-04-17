@@ -23,17 +23,20 @@ public class BasicMovementTest : MonoBehaviour {
     }
     // Update is called once per frame
     void FixedUpdate() {
-        r.MovePosition(z.parentGrid.transform.TransformPoint(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical")))));
+        if(z.parentGrid != null)
+            r.MovePosition(z.parentGrid.transform.TransformPoint(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical")))));
+        else
+            r.MovePosition(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))));
         //Vector3 forceVector = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"));
 
         //if (transform.parent != null)
         //forceVector = transform.parent.localToWorldMatrix * forceVector;
         //r.AddForce(forceVector * speed);
         //if(transform.parent == null) {
-            //r.AddForce((Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+        //r.AddForce((Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
 
         //}else {
-            //r.AddForce(transform.parent.localToWorldMatrix * (Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
+        //r.AddForce(transform.parent.localToWorldMatrix * (Vector3.right * Input.GetAxis("Horizontal") * speed + Vector3.forward * Input.GetAxis("Vertical") * speed + Vector3.up * Input.GetAxis("Vertical Strafe") * speed));
 
         //}
         //transform.Translate(Vector3.right * Input.GetAxis("Horizontal"))

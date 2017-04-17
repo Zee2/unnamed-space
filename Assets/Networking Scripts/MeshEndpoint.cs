@@ -63,6 +63,8 @@ public class MeshEndpoint : MonoBehaviour {
                 SteamNetworking.ReadP2PPacket(destBuffer, bufferLength, out bytesRead, out remoteID);
                 //Debug.Log("CSteamID remoteID = " + remoteID.m_SteamID);
                 ParseData(new MeshPacket(destBuffer));
+            }else {
+                break;
             }
         }
         

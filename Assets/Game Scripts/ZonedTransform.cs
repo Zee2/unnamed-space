@@ -24,11 +24,15 @@ public class ZonedTransform : MonoBehaviour{
             Debug.LogError("No grid manager found in scene");
         }
         if(transform.parent != null)
-            parentGrid = transform.parent.GetComponent<PhysicsGrid>();
+            SetGrid(transform.parent.GetComponent<PhysicsGrid>());
+        else {
+            SetGrid(manager.GetGridByID((ushort)ReservedObjectIDs.RootGrid));
+        }
         if(parentGrid == null) {
             Debug.Log("ZonedTransform does not have a parent grid, this should happen rarely");
         }
         debugRigidbody = GetComponent<Rigidbody>();
+        manager.TriggerRootScan();
 	}
 
     public bool GetAuthorized() {
@@ -65,6 +69,7 @@ public class ZonedTransform : MonoBehaviour{
 
                 parentGrid = g;
                 while (parentGrid.Contains(this) == false) {
+                    Debug.Log(parentGrid.gameObject.name + " does not contain " + gameObject.name);
                     parentGrid = manager.FindNextGrid(parentGrid);
                     if(parentGrid == null) {
                         Debug.Log("Ran out of grids!");
@@ -105,6 +110,7 @@ public class ZonedTransform : MonoBehaviour{
         if(grid != parentGrid) {
             return; //we aren't leaving
         }
+        Debug.Log("Finding next grid after " + grid.gameObject.name);
         SetGrid(manager.FindNextGrid(grid));
         grid.SendMessage("ConfirmObjectExit", this);
     }

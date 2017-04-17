@@ -29,7 +29,8 @@ namespace Utilities {
     public enum ReservedObjectIDs : ushort {
         Unspecified = 0,
         DatabaseObject = 1,
-        Architecture = 2
+        Architecture = 2,
+        RootGrid = 3
     }
     public enum ReservedPlayerIDs : ulong {
         Unspecified = 0,

@@ -7,13 +7,13 @@ using Utilities;
 [RequireComponent(typeof(ZonedTransform))]
 public class PhysicsGrid : MonoBehaviour {
 
-    public bool enableBoundaries = true; //this should be false on the world grid, as objects should never be able to leave.
+    public bool isRootGrid = false; //If multiple grids have this as "true", errors will happen!
 
     public Transform offsetSensor;
     public GameObject proxy;
     ZonedTransform proxyZT;
     MeshNetworkIdentity thisMNI;
-    bool hasIdentityContainer = false;
+    bool hasGridID = false;
     public Vector3 gravity;
     public float gravityStrength;
     public bool radialGravity;
@@ -37,13 +37,57 @@ public class PhysicsGrid : MonoBehaviour {
         else {
             Debug.Log("Gridmanager name = " + manager.name);
         }
+        manager.RebuildTree();
         gridTransform = transform;
         gridZonedTransform = GetComponent<ZonedTransform>();
-        if (enableBoundaries == false) {
+
+        if(isRootGrid && transform.parent != null) {
+            Debug.LogError("Root grid has a parent! This won't work!");
+        }
+        if(isRootGrid && proxy != null) {
+            Debug.LogError("Root grid has a proxy! This won't work!");
+        }
+        if(isRootGrid && GetComponent<IdentityContainer>() != null) {
+            Debug.LogError("Root grid has an identity container. Root grids should not be networked!");
+        }
+
+        ScanForGrids(); //if this is root, it will un-orphan any stray grids or objects
+
+        if (isRootGrid == false) {
+            if (proxy != null) {
+                proxyZT = proxy.GetComponent<ZonedTransform>();
+                if (proxy.GetComponent<IdentityContainer>() != null) {
+                    hasGridID = true;
+                    GridID = proxy.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
+                }
+            } else if (gameObject.GetComponent<IdentityContainer>() != null) {
+                hasGridID = true;
+                GridID = gameObject.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
+            }
+        }else {
+            hasGridID = true;
+            GridID = (ushort)ReservedObjectIDs.RootGrid;
+        }
+        
+        
+
+        if (hasGridID == false) {
+            Debug.LogWarning("Physics grid " + name + " has no grid ID. Will not be able to be serialized across network.");
+        }
+    }
+
+    public void ScanForGrids() { //only the root grid should use this
+        
+        if (isRootGrid == true) {
+            Debug.Log("Root grid is scanning!");
             ZonedTransform[] transforms = FindObjectsOfType<ZonedTransform>(); //Find all orphan zones and claim them!
-            foreach(ZonedTransform z in transforms) {
-                objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>()); //Everybody is the child of this grid.
-                if(z.transform.parent == null) {
+            foreach (ZonedTransform z in transforms) {
+                if(z.gameObject == gameObject) { //don't add ourselves
+                    continue;
+                }
+                if(objectsInGrid.ContainsKey(z.gameObject) == false)
+                    objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>()); //Everybody is the child of this grid.
+                if (z.transform.parent == null) {
                     Debug.Log("Un-orphaning objct with name " + z.gameObject.name);
                     z.SetGrid(this);
                 }
@@ -51,35 +95,16 @@ public class PhysicsGrid : MonoBehaviour {
             Collider[] colliders = GetComponents<Collider>();
             foreach (Collider c in colliders) {
                 if (c.isTrigger) {
-                    //c.enabled = false; //fix later!!!!!!
+                    c.enabled = false;
                 }
             }
         }
-        foreach(ZonedTransform z in GetComponentsInChildren<ZonedTransform>()) {
-            if(z.transform.parent == gridTransform) {
-                if(objectsInGrid.ContainsKey(z.gameObject) == false) {
+        foreach (ZonedTransform z in GetComponentsInChildren<ZonedTransform>()) {
+            if (z.transform.parent == gridTransform) {
+                if (objectsInGrid.ContainsKey(z.gameObject) == false) {
                     objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>());
                 }
             }
-        }
-
-        if (proxy != null)
-            proxyZT = proxy.GetComponent<ZonedTransform>();
-        if (gameObject.GetComponent<IdentityContainer>() != null) {
-            hasIdentityContainer = true;
-            GridID = gameObject.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
-        }
-        else {
-            if (proxy != null) {
-                if (proxy.GetComponent<IdentityContainer>() != null) {
-                    hasIdentityContainer = true;
-                    GridID = proxy.GetComponent<IdentityContainer>().GetIdentity().GetObjectID();
-                }
-            }
-        }
-
-        if (hasIdentityContainer == false) {
-            Debug.LogWarning("Physics grid " + name + " has no grid ID. Will not be able to be serialized across network.");
         }
     }
 
@@ -132,7 +157,7 @@ public class PhysicsGrid : MonoBehaviour {
             }
         }
 
-        if (thisMNI == null && hasIdentityContainer) {
+        if (thisMNI == null && hasGridID) {
             IdentityContainer c = gameObject.GetComponent<IdentityContainer>();
             if (c == null && proxy != null) {
                 c = proxy.GetComponent<IdentityContainer>();
@@ -160,20 +185,13 @@ public class PhysicsGrid : MonoBehaviour {
     }
 
     public ushort GetGridID() {
-        if(proxy == null) {
-            Debug.LogError("Grid has no proxy, cannot retrieve GridID");
+        if(hasGridID == false) {
+            Debug.LogError("No gridID available");
             return (ushort)ReservedObjectIDs.Unspecified;
+        }else {
+            return GridID;
         }
-        else {
-            IdentityContainer c = proxy.gameObject.GetComponent<IdentityContainer>();
-            if(c != null) {
-                return c.GetIdentity().GetObjectID();
-            }
-            else {
-                Debug.Log("Proxy has no MeshNetworkIdentity");
-                return (ushort)ReservedObjectIDs.Unspecified;
-            }
-        }
+        
     }
     
 
