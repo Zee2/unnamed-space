@@ -32,6 +32,12 @@ public class ZonedTransform : MonoBehaviour{
             Debug.Log("ZonedTransform does not have a parent grid, this should happen rarely");
         }
         debugRigidbody = GetComponent<Rigidbody>();
+
+        IdentityContainer c = GetComponent<IdentityContainer>();
+        if(c != null) {
+            thisMNI = c.GetIdentity();
+        }
+
         manager.TriggerRootScan();
 	}
 
