@@ -125,6 +125,53 @@ public class PhysicsGridManager : MonoBehaviour {
 
 
     }
+
+    //Transforms <position> from <source> physics grid to <target> physics grid.
+    //<position> is assumed to be measured relative to <source> physics grid.
+
+    //This override uses large-world coordinates.
+    public Vector3D GetRelativePosition(PhysicsGrid source, PhysicsGrid target, Vector3D position) {
+
+        if (source == null || target == null) {
+            Debug.LogError("Null grid");
+            return position;
+        }
+
+        if (target.Equals(source)) {
+
+            return position;
+        }
+        if (registry.ContainsKey(source) == false || registry.ContainsKey(target) == false) {
+            Debug.LogError("Zone not found");
+            return new Vector3D(Vector3.zero);
+        }
+
+        List<PhysicsGrid> targetParentage = registry[target];
+        List<PhysicsGrid> sourceParentage = registry[source];
+        position = (source.transform.localRotation * position) + new Vector3D(source.transform.localPosition);
+        for (int i = 0; i < sourceParentage.Count; i++) {
+
+            if (sourceParentage[i] == target) {
+                return position;
+            }
+
+            int index = targetParentage.IndexOf(sourceParentage[i]);
+            if (index != -1) { //we have found a common ancestor
+
+                for (int j = index - 1; i >= 0; i--) { //climb back down the tree, starting at one grid below
+                    position = (Quaternion.Inverse(targetParentage[i].transform.localRotation) * position) - new Vector3D(targetParentage[i].transform.localPosition);
+                }
+                position = (Quaternion.Inverse(target.transform.localRotation) * position) - new Vector3D(target.transform.localPosition);
+                return position;
+            }
+            position = (sourceParentage[i].transform.localRotation * position) + new Vector3D(sourceParentage[i].transform.localPosition);
+        }
+        return new Vector3D(Vector3.zero);
+
+
+    }
+
+
     public Quaternion GetRelativeRotation(PhysicsGrid source, PhysicsGrid target, Quaternion rotation) {
 
         if (source == null || target == null) {

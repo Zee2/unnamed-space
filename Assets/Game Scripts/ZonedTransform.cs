@@ -8,7 +8,7 @@ public class ZonedTransform : MonoBehaviour{
     
     public PhysicsGrid parentGrid;
     ZonedTransform proxyZT;
-    PhysicsGridManager manager;
+    public PhysicsGridManager manager;
     Transform thisTransform;
     MeshNetworkIdentity thisMNI;
 

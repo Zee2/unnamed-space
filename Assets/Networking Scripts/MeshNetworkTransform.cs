@@ -90,6 +90,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     //networked
     Vector3D position;
+    ushort lastGridID;
     public Vector3 velocity;
     public Vector3 acceleration; //only used with kinematic bodies
     public Quaternion rotation;
@@ -411,7 +412,15 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         thisRigidbody.WakeUp();
         lastInterval = Mathf.Lerp(lastInterval, Time.time - lastUpdateTime, 0.5f);
         lastUpdateTime = Time.time;
-        
+
+        if (hasZonedTransform) {
+
+            if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
+                thisZonedTransform.SetGrid(t.gridID, true);
+            }
+
+        }
+
         isKinematic = t.isKinematic;
         beforeUpdatePosition = GetPosition(); //hmm
         beforeUpdateVelocity = thisRigidbody.velocity;
@@ -432,12 +441,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisRigidbody.angularVelocity = axis * angle * Mathf.Deg2Rad;
         }
 
-        if (hasZonedTransform) {
-            if(t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
-                thisZonedTransform.SetGrid(t.gridID, true);
-            }
-            
-        }
+        
 
     }
 
