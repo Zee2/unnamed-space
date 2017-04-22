@@ -24,9 +24,9 @@ public class ZonedTransform : MonoBehaviour{
             Debug.LogError("No grid manager found in scene");
         }
         if(transform.parent != null)
-            SetGrid(transform.parent.GetComponent<PhysicsGrid>());
+            SetGrid(transform.parent.GetComponent<PhysicsGrid>(), true);
         else {
-            SetGrid(manager.GetGridByID((ushort)ReservedObjectIDs.RootGrid));
+            SetGrid(manager.GetGridByID((ushort)ReservedObjectIDs.RootGrid), true);
         }
         if(parentGrid == null) {
             Debug.Log("ZonedTransform does not have a parent grid, this should happen rarely");
@@ -42,24 +42,26 @@ public class ZonedTransform : MonoBehaviour{
         return thisMNI.IsLocallyOwned();
     }
     
-    public void SetGrid(ushort id) {
-        if (GetAuthorized() == false)
-            return;
-
+    public void SetGrid(ushort id, bool remoteOverride) {
+        
         PhysicsGrid g = manager.GetGridByID(id);
-        SetGrid(g);
+        SetGrid(g, remoteOverride);
     }
 
-    public void SetGrid(PhysicsGrid g) {
-        if (GetAuthorized() == false)
-            return;
+    public void SetGrid(PhysicsGrid g, bool remoteOverride) {
+        if (GetAuthorized() == false) {
+            if(remoteOverride == false) {
+                return; //not authorized, and it is not a remote update
+            }
+        }
 
         if(parentGrid != null && parentGrid.GetGridID() != (ushort)Utilities.ReservedObjectIDs.Unspecified && parentGrid.GetGridID() == g.GetGridID()) {
             Debug.Log("No zone change needed");
             return;
         }
-        
-        if(parentGrid == null && g != null) {
+        //if we have no parent, do not perform hierarchical safety check
+        //or if it is a remote update, also skip hierarchical safety check
+        if((parentGrid == null && g != null) || remoteOverride) {
             parentGrid = g;
             transform.parent = parentGrid.transform;
             parentGrid.SendMessage("OnConfirmObjectEnter", this);
@@ -99,7 +101,7 @@ public class ZonedTransform : MonoBehaviour{
             return;
         }
         Debug.Log("Entering a zone!");
-        SetGrid(grid);
+        SetGrid(grid, false);
         grid.SendMessage("OnConfirmObjectEnter", this);
     }
 
@@ -111,7 +113,7 @@ public class ZonedTransform : MonoBehaviour{
             return; //we aren't leaving
         }
         Debug.Log("Finding next grid after " + grid.gameObject.name);
-        SetGrid(manager.FindNextGrid(grid));
+        SetGrid(manager.FindNextGrid(grid), false);
         grid.SendMessage("ConfirmObjectExit", this);
     }
 	

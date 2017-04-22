@@ -434,7 +434,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         if (hasZonedTransform) {
             if(t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
-                thisZonedTransform.SetGrid(t.gridID);
+                thisZonedTransform.SetGrid(t.gridID, true);
             }
             
         }

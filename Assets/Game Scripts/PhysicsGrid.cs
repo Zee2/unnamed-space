@@ -88,7 +88,7 @@ public class PhysicsGrid : MonoBehaviour {
                     objectsInGrid.Add(z.gameObject, z.GetComponent<Rigidbody>()); //Everybody is the child of this grid.
                 if (z.transform.parent == null) {
                     Debug.Log("Un-orphaning objct with name " + z.gameObject.name);
-                    z.SetGrid(this);
+                    z.SetGrid(this, false);
                 }
             }
             Collider[] colliders = GetComponents<Collider>();
