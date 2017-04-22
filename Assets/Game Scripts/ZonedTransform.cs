@@ -56,7 +56,7 @@ public class ZonedTransform : MonoBehaviour{
         }
 
         if(parentGrid != null && parentGrid.GetGridID() != (ushort)Utilities.ReservedObjectIDs.Unspecified && parentGrid.GetGridID() == g.GetGridID()) {
-            Debug.Log("No zone change needed");
+            //Debug.Log("No zone change needed");
             return;
         }
         //if we have no parent, do not perform hierarchical safety check

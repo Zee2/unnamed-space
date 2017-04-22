@@ -445,7 +445,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         if(GetIdentity().IsLocallyOwned() == false) {
             Debug.LogError("Not authorized to broadcast updates");
         }
-
+        beforeUpdatePosition = updatedPosition;
+        updatedPosition = position;
         outgoingPacket.SetPacketType(PacketType.TransformUpdate);
         outgoingPacket.SetSourceObjectId(GetIdentity().GetObjectID());
         outgoingPacket.SetTargetObjectId(GetIdentity().GetObjectID());
