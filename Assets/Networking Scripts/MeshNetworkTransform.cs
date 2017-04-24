@@ -414,12 +414,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         lastUpdateTime = Time.time;
 
         if (hasZonedTransform) {
-
+            position = thisZonedTransform.manager.GetRelativePosition(thisZonedTransform.parentGrid, thisZonedTransform.manager.GetGridByID(t.gridID), position);
             if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
                 thisZonedTransform.SetGrid(t.gridID, true);
             }
 
         }
+
+        
 
         isKinematic = t.isKinematic;
         beforeUpdatePosition = GetPosition(); //hmm
