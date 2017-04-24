@@ -148,7 +148,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     Vector3 CompressPosition(Vector3D precisePosition) { //converts from "large world" coordinates to "machine" coordinates
-        return precisePosition;
+        
         if (hasZonedTransform) {
             if (thisZonedTransform.parentGrid != null)
                 return precisePosition - thisZonedTransform.parentGrid.currentWorldOrigin;
@@ -459,7 +459,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         outgoingPacket.SetSubcomponentID(GetSubcomponentID());
 
         outgoingUpdate.isKinematic = isKinematic;
-        outgoingUpdate.position = position; //Again, these are large world coordinates!
+        outgoingUpdate.position = GetPosition(); //Again, these are large world coordinates!
         //Debug.Log("Outgoing position = " + position.x + ", " + position.y + ", " + position.z);
         outgoingUpdate.velocity = velocity;
         outgoingUpdate.rotation = rotation;
