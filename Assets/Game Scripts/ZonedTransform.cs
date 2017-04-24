@@ -58,10 +58,12 @@ public class ZonedTransform : MonoBehaviour{
     }
 
     public void SetGrid(PhysicsGrid g, bool remoteOverride) {
-        Debug.Log("Setgrid: " + gameObject.name + " is authorized: " + GetAuthorized());
         if (GetAuthorized() == false) {
             if(remoteOverride == false) {
                 return; //not authorized, and it is not a remote update
+            }
+            else {
+                Debug.Log("Setgrid: remote update");
             }
         }
 
@@ -117,8 +119,10 @@ public class ZonedTransform : MonoBehaviour{
 
     public void OnSuggestZoneExit(PhysicsGrid grid) {
         Debug.Log(this.name + " being suggested to exit grid " + grid.gameObject.name);
-        if (GetAuthorized() == false)
+        if (GetAuthorized() == false) {
+            Debug.Log("Not authorized");
             return;
+        }
         if(grid != parentGrid) {
             return; //we aren't leaving
         }
