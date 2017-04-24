@@ -36,6 +36,7 @@ public class ZonedTransform : MonoBehaviour{
         IdentityContainer c = GetComponent<IdentityContainer>();
         if(c != null) {
             thisMNI = c.GetIdentity();
+            hasIdentityContainer = true;
         }
 
         manager.TriggerRootScan();
@@ -43,6 +44,8 @@ public class ZonedTransform : MonoBehaviour{
 
     public bool GetAuthorized() {
         if(thisMNI == null || hasIdentityContainer == false) {
+            Debug.Log("ThisMNI: " + thisMNI + ", hasIdentityContainer: " + hasIdentityContainer);
+            
             return true;
         }
         return thisMNI.IsLocallyOwned();
@@ -55,6 +58,7 @@ public class ZonedTransform : MonoBehaviour{
     }
 
     public void SetGrid(PhysicsGrid g, bool remoteOverride) {
+        Debug.Log("Setgrid: " + gameObject.name + " is authorized: " + GetAuthorized());
         if (GetAuthorized() == false) {
             if(remoteOverride == false) {
                 return; //not authorized, and it is not a remote update
