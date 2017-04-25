@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 using UnityEngine.UI;
 using Utilities;
 
@@ -45,7 +46,7 @@ public class PhysicsGridManager : MonoBehaviour {
             if (registry.ContainsKey(g))
                 registry.Remove(g);
             registry.Add(g, new List<PhysicsGrid>());
-            Transform t = g.transform; //starts with parent!
+            Transform t = g.transform.parent; //starts with parent!
             parentCounter = 0;
             while (t != null) {
                 PhysicsGrid thisGrid = t.GetComponent<PhysicsGrid>();
@@ -171,15 +172,19 @@ public class PhysicsGridManager : MonoBehaviour {
             return new Vector3D(Vector3.zero);
         }
 
-        List<PhysicsGrid> targetParentageInclusive = registry[target];
-        List<PhysicsGrid> sourceParentageInclusive = registry[source];
-        for (int i = 0; i < sourceParentageInclusive.Count; i++) { //starts with source grid
+        PhysicsGrid[] targetParentageInclusive = new PhysicsGrid[registry[target].Count + 1];
+        registry[target].CopyTo(targetParentageInclusive, 1);
+        targetParentageInclusive[0] = target;
+        PhysicsGrid[] sourceParentageInclusive = new PhysicsGrid[registry[source].Count + 1];
+        registry[source].CopyTo(sourceParentageInclusive, 1);
+        sourceParentageInclusive[0] = source;
+        for (int i = 0; i < sourceParentageInclusive.Length; i++) { //starts with source grid
 
             if (sourceParentageInclusive[i] == target) { //when i = 0, sourceParentage[i] = source
                 return position;
             }
-
-            int index = targetParentageInclusive.IndexOf(sourceParentageInclusive[i]);
+            
+            int index = Array.IndexOf(targetParentageInclusive, sourceParentageInclusive[i]);
             if (index != -1) { //we have found a common ancestor
 
                 for (int j = index - 1; i >= 0; i--) { //climb back down the tree, starting at one grid below
@@ -188,7 +193,7 @@ public class PhysicsGridManager : MonoBehaviour {
                 return position;
             }
             //going up one level now
-            Debug.LogError("Going up a level! Source parentage length = " + sourceParentageInclusive.Count);
+            Debug.LogError("Going up a level! Source parentage length = " + sourceParentageInclusive.Length);
             position = (sourceParentageInclusive[i].transform.localRotation * position) + new Vector3D(sourceParentageInclusive[i].transform.localPosition);
         }
         Debug.LogError("Fallback");
@@ -196,6 +201,7 @@ public class PhysicsGridManager : MonoBehaviour {
 
 
     }
+    
 
 
     public Quaternion GetRelativeRotation(PhysicsGrid source, PhysicsGrid target, Quaternion rotation) {
