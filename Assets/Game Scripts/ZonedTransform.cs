@@ -62,9 +62,6 @@ public class ZonedTransform : MonoBehaviour{
             if(remoteOverride == false) {
                 return; //not authorized, and it is not a remote update
             }
-            else {
-                Debug.Log("Setgrid: remote update");
-            }
         }
 
         if(parentGrid != null && parentGrid.GetGridID() != (ushort)Utilities.ReservedObjectIDs.Unspecified && parentGrid.GetGridID() == g.GetGridID()) {
