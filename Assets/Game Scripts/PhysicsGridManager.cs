@@ -146,7 +146,7 @@ public class PhysicsGridManager : MonoBehaviour {
             //going up one level now
             position = (sourceParentageInclusive[i].transform.localRotation * position) + sourceParentageInclusive[i].transform.localPosition;
         }
-        Debug.LogError("Source has no parents...");
+        Debug.LogError("Fallback");
         return Vector3.zero;
 
 
@@ -157,7 +157,6 @@ public class PhysicsGridManager : MonoBehaviour {
 
     //This override uses large-world coordinates.
     public Vector3D GetRelativePosition(PhysicsGrid source, PhysicsGrid target, Vector3D position) {
-
         if (source == null || target == null) {
             Debug.LogError("Null grid");
             return position;
@@ -172,26 +171,29 @@ public class PhysicsGridManager : MonoBehaviour {
             return new Vector3D(Vector3.zero);
         }
 
-        List<PhysicsGrid> targetParentage = registry[target];
-        List<PhysicsGrid> sourceParentage = registry[source];
-        position = (source.transform.localRotation * position) + new Vector3D(source.transform.localPosition);
-        for (int i = 0; i < sourceParentage.Count; i++) {
+        List<PhysicsGrid> targetParentageInclusive = registry[target];
+        targetParentageInclusive.Insert(0, target);
+        List<PhysicsGrid> sourceParentageInclusive = registry[source];
+        sourceParentageInclusive.Insert(0, source);
+        //position = (source.transform.localRotation * position) + source.transform.localPosition; //"position" is now one level up
+        for (int i = 0; i < sourceParentageInclusive.Count; i++) {
 
-            if (sourceParentage[i] == target) {
+            if (sourceParentageInclusive[i] == target) { //when i = 0, sourceParentage[i] = source
                 return position;
             }
 
-            int index = targetParentage.IndexOf(sourceParentage[i]);
+            int index = targetParentageInclusive.IndexOf(sourceParentageInclusive[i]);
             if (index != -1) { //we have found a common ancestor
 
                 for (int j = index - 1; i >= 0; i--) { //climb back down the tree, starting at one grid below
-                    position = (Quaternion.Inverse(targetParentage[i].transform.localRotation) * position) - new Vector3D(targetParentage[i].transform.localPosition);
+                    position = (Quaternion.Inverse(targetParentageInclusive[i].transform.localRotation) * position) - new Vector3D(targetParentageInclusive[i].transform.localPosition);
                 }
-                position = (Quaternion.Inverse(target.transform.localRotation) * position) - new Vector3D(target.transform.localPosition);
                 return position;
             }
-            position = (sourceParentage[i].transform.localRotation * position) + new Vector3D(sourceParentage[i].transform.localPosition);
+            //going up one level now
+            position = (sourceParentageInclusive[i].transform.localRotation * position) + new Vector3D(sourceParentageInclusive[i].transform.localPosition);
         }
+        Debug.LogError("Fallback");
         return new Vector3D(Vector3.zero);
 
 
