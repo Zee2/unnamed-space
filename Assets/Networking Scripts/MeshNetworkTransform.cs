@@ -414,6 +414,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         lastUpdateTime = Time.time;
 
         if (hasZonedTransform) {
+            //thisZonedTransform.parentGrid has the old grid
+            //t.gridID has the new grid
             position = thisZonedTransform.manager.GetRelativePosition(thisZonedTransform.parentGrid, thisZonedTransform.manager.GetGridByID(t.gridID), position);
             if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
                 thisZonedTransform.SetGrid(t.gridID, true);

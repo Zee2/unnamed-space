@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using Utilities;
 
 public class PhysicsGridManager : MonoBehaviour {
@@ -10,12 +11,29 @@ public class PhysicsGridManager : MonoBehaviour {
     public PhysicsGrid target;
     Dictionary<PhysicsGrid, List<PhysicsGrid>> registry = new Dictionary<PhysicsGrid, List<PhysicsGrid>>();
 
+    public Text debug;
     public PhysicsGrid testChild;
     public PhysicsGrid testParent;
 
     // Use this for initialization
     void Start() {
         BuildTree();
+    }
+
+    void Update() {
+        
+        string s = "Grid Registry: \n";
+        foreach(KeyValuePair<PhysicsGrid, List<PhysicsGrid>> k in registry) {
+            s += k.Key.name + " :{";
+            foreach(PhysicsGrid g in k.Value) {
+                s += g.name + ", ";
+            }
+            s += "} \n";
+        }
+
+        if(debug != null) {
+            debug.text = s;
+        }
     }
 
     void BuildTree() {
@@ -87,6 +105,11 @@ public class PhysicsGridManager : MonoBehaviour {
     //GetRelativePosition uses machine-space coordinates, not floating-origin-transformed coordinates.
     public Vector3 GetRelativePosition(PhysicsGrid source, PhysicsGrid target, Vector3 position) {
 
+        //FLAW HERE! Doesn't work for source being the common ancestor, and target being a child.
+        //It doesn't check for common ancestry BEFORE jumping up a level. Bad!
+        //FIX FIX FIX!
+
+
         if (source == null || target == null) {
             Debug.LogError("Null grid");
             return position;
@@ -103,7 +126,7 @@ public class PhysicsGridManager : MonoBehaviour {
 
         List<PhysicsGrid> targetParentage = registry[target];
         List<PhysicsGrid> sourceParentage = registry[source];
-        position = (source.transform.localRotation * position) + source.transform.localPosition;
+        position = (source.transform.localRotation * position) + source.transform.localPosition; //"position" is now one level up
         for (int i = 0; i < sourceParentage.Count; i++) {
 
             if (sourceParentage[i] == target) {
@@ -121,6 +144,7 @@ public class PhysicsGridManager : MonoBehaviour {
             }
             position = (sourceParentage[i].transform.localRotation * position) + sourceParentage[i].transform.localPosition;
         }
+        Debug.LogError("Source has no parents...");
         return Vector3.zero;
 
 
