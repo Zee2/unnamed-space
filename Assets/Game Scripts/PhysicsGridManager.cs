@@ -124,25 +124,27 @@ public class PhysicsGridManager : MonoBehaviour {
             return Vector3.zero;
         }
 
-        List<PhysicsGrid> targetParentage = registry[target];
-        List<PhysicsGrid> sourceParentage = registry[source];
-        position = (source.transform.localRotation * position) + source.transform.localPosition; //"position" is now one level up
-        for (int i = 0; i < sourceParentage.Count; i++) {
+        List<PhysicsGrid> targetParentageInclusive = registry[target];
+        targetParentageInclusive.Insert(0, target);
+        List<PhysicsGrid> sourceParentageInclusive = registry[source];
+        sourceParentageInclusive.Insert(0, source);
+        //position = (source.transform.localRotation * position) + source.transform.localPosition; //"position" is now one level up
+        for (int i = 0; i < sourceParentageInclusive.Count; i++) {
 
-            if (sourceParentage[i] == target) {
+            if (sourceParentageInclusive[i] == target) { //when i = 0, sourceParentage[i] = source
                 return position;
             }
 
-            int index = targetParentage.IndexOf(sourceParentage[i]);
+            int index = targetParentageInclusive.IndexOf(sourceParentageInclusive[i]);
             if (index != -1) { //we have found a common ancestor
 
                 for (int j = index - 1; i >= 0; i--) { //climb back down the tree, starting at one grid below
-                    position = (Quaternion.Inverse(targetParentage[i].transform.localRotation) * position) - targetParentage[i].transform.localPosition;
+                    position = (Quaternion.Inverse(targetParentageInclusive[i].transform.localRotation) * position) - targetParentageInclusive[i].transform.localPosition;
                 }
-                position = (Quaternion.Inverse(target.transform.localRotation) * position) - target.transform.localPosition;
                 return position;
             }
-            position = (sourceParentage[i].transform.localRotation * position) + sourceParentage[i].transform.localPosition;
+            //going up one level now
+            position = (sourceParentageInclusive[i].transform.localRotation * position) + sourceParentageInclusive[i].transform.localPosition;
         }
         Debug.LogError("Source has no parents...");
         return Vector3.zero;
