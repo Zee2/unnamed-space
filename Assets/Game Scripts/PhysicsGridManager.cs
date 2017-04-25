@@ -193,7 +193,6 @@ public class PhysicsGridManager : MonoBehaviour {
                 return position;
             }
             //going up one level now
-            Debug.LogError("Going up a level! Source parentage length = " + sourceParentageInclusive.Length);
             position = (sourceParentageInclusive[i].transform.localRotation * position) + new Vector3D(sourceParentageInclusive[i].transform.localPosition);
         }
         Debug.LogError("Fallback");
