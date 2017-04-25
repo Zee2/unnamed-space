@@ -96,9 +96,7 @@ public class ZonedTransform : MonoBehaviour{
     }
 
     public void OnSuggestZoneEnter(PhysicsGrid grid) {
-        Debug.Log(this.name + " being suggested to enter grid " + grid.name);
         if (GetAuthorized() == false) {
-            Debug.Log("Not authorized");
             return;
         }
             
@@ -109,21 +107,17 @@ public class ZonedTransform : MonoBehaviour{
             Debug.Log("Invalid transition: " + grid.name + " not a child of " + parentGrid.name);
             return;
         }
-        Debug.Log("Entering a zone!");
         SetGrid(grid, false);
         grid.SendMessage("OnConfirmObjectEnter", this);
     }
 
     public void OnSuggestZoneExit(PhysicsGrid grid) {
-        Debug.Log(this.name + " being suggested to exit grid " + grid.gameObject.name);
         if (GetAuthorized() == false) {
-            Debug.Log("Not authorized");
             return;
         }
         if(grid != parentGrid) {
             return; //we aren't leaving
         }
-        Debug.Log("Finding next grid after " + grid.gameObject.name);
         SetGrid(manager.FindNextGrid(grid), false);
         grid.SendMessage("ConfirmObjectExit", this);
     }

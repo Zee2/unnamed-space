@@ -205,7 +205,6 @@ public class PhysicsGrid : MonoBehaviour {
     }
 
     void OnTriggerEnter(Collider c) {
-        Debug.Log("Grid trigger enter!");
         if(objectsInGrid.ContainsKey(c.gameObject) == false)
             objectsInGrid.Add(c.gameObject, c.GetComponent<Rigidbody>());
         c.gameObject.SendMessage("OnSuggestZoneEnter", this);

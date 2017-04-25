@@ -245,7 +245,6 @@ public class PhysicsGridManager : MonoBehaviour {
     }
 
     public PhysicsGrid FindNextGrid(PhysicsGrid grid) {
-        Debug.Log("GridManager.FindNextGrid(" + grid.gameObject.name + ")");
         if (registry.ContainsKey(grid) == false) {
             Debug.LogError("Registry can't find grid " + grid.gameObject.name);
             return null;
