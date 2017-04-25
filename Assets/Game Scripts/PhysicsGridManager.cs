@@ -45,7 +45,7 @@ public class PhysicsGridManager : MonoBehaviour {
             if (registry.ContainsKey(g))
                 registry.Remove(g);
             registry.Add(g, new List<PhysicsGrid>());
-            Transform t = g.transform.parent; //starts with parent!
+            Transform t = g.transform; //starts with parent!
             parentCounter = 0;
             while (t != null) {
                 PhysicsGrid thisGrid = t.GetComponent<PhysicsGrid>();
@@ -172,11 +172,8 @@ public class PhysicsGridManager : MonoBehaviour {
         }
 
         List<PhysicsGrid> targetParentageInclusive = registry[target];
-        targetParentageInclusive.Insert(0, target);
         List<PhysicsGrid> sourceParentageInclusive = registry[source];
-        sourceParentageInclusive.Insert(0, source);
-        //position = (source.transform.localRotation * position) + source.transform.localPosition; //"position" is now one level up
-        for (int i = 0; i < sourceParentageInclusive.Count; i++) {
+        for (int i = 0; i < sourceParentageInclusive.Count; i++) { //starts with source grid
 
             if (sourceParentageInclusive[i] == target) { //when i = 0, sourceParentage[i] = source
                 return position;
@@ -191,6 +188,7 @@ public class PhysicsGridManager : MonoBehaviour {
                 return position;
             }
             //going up one level now
+            Debug.LogError("Going up a level! Source parentage length = " + sourceParentageInclusive.Count);
             position = (sourceParentageInclusive[i].transform.localRotation * position) + new Vector3D(sourceParentageInclusive[i].transform.localPosition);
         }
         Debug.LogError("Fallback");
