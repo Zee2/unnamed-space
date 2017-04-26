@@ -227,13 +227,21 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
 
 
-                if (hasRigidbody && (isKinematic == false)) {
+                if (hasRigidbody && (isKinematic == false)) { //if we have a rigidbody and we should use full physics
                     position = GetPosition(); //returns large world coordinates if we have them
                     rotation = thisTransform.localRotation;
-                    velocity = thisTransform.InverseTransformDirection(workingRigidbody.velocity);
-                    Vector3 v = thisTransform.InverseTransformDirection(workingRigidbody.angularVelocity);
+                    Vector3 v;
+                    if (thisTransform.parent != null) { //if we have a parent, transform the world rigidbody velocity to localspace
+                        velocity = thisTransform.parent.InverseTransformDirection(workingRigidbody.velocity);
+                        v = thisTransform.parent.InverseTransformDirection(workingRigidbody.angularVelocity);
+                    } else {
+                        velocity = workingRigidbody.velocity;
+                        v = workingRigidbody.angularVelocity;
+                    }
+                    
                     float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                     rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+
                 } else if (hasRigidbody) { //we have a kinematic rigidbody
                     position = GetPosition(); //returns large world coordinates using rigidbody position
                     rotation = thisTransform.localRotation;
@@ -252,8 +260,12 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
                     //velocity = velocityAverage;
                     */
-                    velocity = thisTransform.InverseTransformDirection(workingRigidbody.velocity);
-
+                    
+                    if (thisTransform.parent != null) { //if we have a parent, transform the world rigidbody velocity to localspace
+                        velocity = thisTransform.parent.InverseTransformDirection(workingRigidbody.velocity);
+                    } else {
+                        velocity = workingRigidbody.velocity;
+                    }
                     lastPosition = position;
                     lastVelocity = velocity;
 
