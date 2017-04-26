@@ -262,4 +262,8 @@ public class PhysicsGrid : MonoBehaviour {
             counter++;
         }
     }
+
+    public ZonedTransform GetGridZonedTransform() {
+        return gridZonedTransform;
+    }
 }

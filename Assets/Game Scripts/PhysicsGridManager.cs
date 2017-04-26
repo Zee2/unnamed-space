@@ -188,12 +188,12 @@ public class PhysicsGridManager : MonoBehaviour {
             if (index != -1) { //we have found a common ancestor
 
                 for (int j = index - 1; i >= 0; i--) { //climb back down the tree, starting at one grid below
-                    position = (Quaternion.Inverse(targetParentageInclusive[i].transform.localRotation) * position) - new Vector3D(targetParentageInclusive[i].transform.localPosition);
+                    position = (Quaternion.Inverse(targetParentageInclusive[i].transform.localRotation) * position) - targetParentageInclusive[i].GetGridZonedTransform().GetLargeWorldPosition();
                 }
                 return position;
             }
             //going up one level now
-            position = (sourceParentageInclusive[i].transform.localRotation * position) + new Vector3D(sourceParentageInclusive[i].transform.localPosition);
+            position = (sourceParentageInclusive[i].transform.localRotation * position) + sourceParentageInclusive[i].GetGridZonedTransform().GetLargeWorldPosition();
         }
         Debug.LogError("Fallback");
         return new Vector3D(Vector3.zero);
