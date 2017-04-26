@@ -376,6 +376,9 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
                 //workingRigidbody.velocity = velocity;
                 //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
+
+                rotation = ConvertRotationToLocalRotation(workingRigidbody.rotation) * currentRotationOffset;
+
                 Vector3 v;
                 if(thisTransform.parent != null) {
                     v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
