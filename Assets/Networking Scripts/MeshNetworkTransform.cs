@@ -446,13 +446,23 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         isKinematic = t.isKinematic;
         beforeUpdatePosition = GetPosition(); //hmm
+        Vector3 v;
         if (hasRigidbody) {
-            beforeUpdateVelocity = thisRigidbody.velocity;
-            beforeUpdateRotation = thisRigidbody.rotation;
+            if (thisTransform.parent != null) { //if we have a parent, transform the world rigidbody velocity to localspace
+                beforeUpdateVelocity = thisTransform.parent.InverseTransformDirection(workingRigidbody.velocity);
+                v = thisTransform.parent.InverseTransformDirection(workingRigidbody.angularVelocity);
+            } else {
+                velocity = workingRigidbody.velocity;
+                v = workingRigidbody.angularVelocity;
+            }
+            float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+            beforeUpdateRotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
         }else {
-            beforeUpdateRotation = thisTransform.localRotation;
+            beforeUpdateRotationalVelocity = rotationalVelocity;
         }
-        
+
+
+        beforeUpdateRotation = thisTransform.localRotation;
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position; //These are large world coordinates!!
