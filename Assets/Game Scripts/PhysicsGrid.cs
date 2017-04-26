@@ -148,7 +148,7 @@ public class PhysicsGrid : MonoBehaviour {
                 gridTransform.GetChild(i).localPosition -= delta;
             }
         }
-        if (offsetSensor != null && (offsetSensor.position - gridTransform.position).magnitude > 200) {
+        if (offsetSensor != null && (offsetSensor.position - gridTransform.position).magnitude > 1000) {
             Vector3 localDelta = gridTransform.worldToLocalMatrix * (offsetSensor.position - gridTransform.position);
             currentWorldOrigin = currentWorldOrigin + localDelta;
             for (int i = 0; i < gridTransform.childCount; i++) {

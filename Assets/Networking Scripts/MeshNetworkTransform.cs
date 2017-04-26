@@ -127,7 +127,6 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(CompressPosition(position), 0.6f);
         Gizmos.DrawLine(CompressPosition(position), CompressPosition(position) + velocity);
-        Gizmos.DrawLine(position, position + Vector3.up * 0.5f);
         
         Gizmos.color = Color.green;
         Gizmos.DrawSphere(CompressPosition(updatedPosition), 0.2f);
@@ -466,7 +465,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             Debug.LogError("Not authorized to broadcast updates");
         }
         beforeUpdatePosition = updatedPosition;
+        
+        
+
         updatedPosition = position;
+
         outgoingPacket.SetPacketType(PacketType.TransformUpdate);
         outgoingPacket.SetSourceObjectId(GetIdentity().GetObjectID());
         outgoingPacket.SetTargetObjectId(GetIdentity().GetObjectID());
