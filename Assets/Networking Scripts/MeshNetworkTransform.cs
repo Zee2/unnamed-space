@@ -175,12 +175,25 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         
         if (hasZonedTransform) {
             if (thisZonedTransform.parentGrid != null) {
-                return thisZonedTransform.parentGrid.transform.localRotation * localRotation;
+                return thisZonedTransform.parentGrid.transform.rotation * localRotation;
             } else {
                 return localRotation;
             }
         } else {
             return localRotation;
+        }
+    }
+
+    Quaternion ConvertRotationToLocalRotation(Quaternion worldRotation) { //takes in local rotation
+
+        if (hasZonedTransform) {
+            if (thisZonedTransform.parentGrid != null) {
+                return Quaternion.Inverse(thisZonedTransform.parentGrid.transform.rotation) * worldRotation;
+            } else {
+                return worldRotation;
+            }
+        } else {
+            return worldRotation;
         }
     }
 
@@ -327,24 +340,63 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     currentRotationOffset = Quaternion.identity;
                     currentRotationalVelocityOffset = Quaternion.identity;
                 }
+
+
+                //workingRigidbody.MovePosition(workingRigidbody.position + currentOffset);
+                position += currentOffset;
+
+
+                //velocity = workingRigidbody.velocity + currentVelocityOffset;
+                velocity += currentVelocityOffset;
+
+
+                //workingRigidbody.velocity = velocity;
+                //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
+                Vector3 v;
+                if(thisTransform.parent != null) {
+                    v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
+                }else {
+                    v = workingRigidbody.angularVelocity;
+                }
                 
-                workingRigidbody.MovePosition(workingRigidbody.position + currentOffset);
-                velocity = workingRigidbody.velocity + currentVelocityOffset;
-                workingRigidbody.velocity = velocity;
-                workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
-
-
-                Vector3 v = workingRigidbody.angularVelocity; //convert angular velocity into a quaternion for easier math
                 float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                 //Construct the current angular velocity quaternion, and add the current offset, and then convert back to angleAxis
-                (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
-                workingRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
+                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset;
 
-                position = GetPosition();
-                rotation = workingRigidbody.rotation;
-                v = workingRigidbody.angularVelocity;
-                angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
-                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+
+
+
+                workingRigidbody.MovePosition(ConvertPointToWorldCoordinates(position));
+                workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
+
+
+                if(thisTransform.parent != null) {
+                    workingRigidbody.velocity = thisTransform.parent.TransformVector(velocity);
+                    rotationalVelocity.ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
+                    workingRigidbody.angularVelocity = thisTransform.parent.TransformVector(tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad);
+                }else {//no parent
+                    workingRigidbody.velocity = velocity;
+                    rotationalVelocity.ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
+                    workingRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
+                }
+                
+                
+                position = GetPosition(); //maybe, maybe not
+
+                if(thisTransform.parent != null) {
+                    rotation = ConvertRotationToLocalRotation(workingRigidbody.rotation);
+                    v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
+                    angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                    rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+                }else {
+                    rotation = workingRigidbody.rotation;
+                    v = workingRigidbody.angularVelocity;
+                    angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                    rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+                }
+                
+                
+                
             }
             else { //physicsless motion
                 
