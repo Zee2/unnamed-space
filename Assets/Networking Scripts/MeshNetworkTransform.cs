@@ -175,7 +175,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         
         if (hasZonedTransform) {
             if (thisZonedTransform.parentGrid != null) {
-                return Quaternion.Inverse(thisZonedTransform.parentGrid.transform.rotation) * localRotation;
+                return thisZonedTransform.parentGrid.transform.localRotation * localRotation;
             } else {
                 return localRotation;
             }
