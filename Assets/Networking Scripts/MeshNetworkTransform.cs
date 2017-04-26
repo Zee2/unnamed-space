@@ -367,36 +367,28 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
 
 
-                //workingRigidbody.MovePosition(workingRigidbody.position + currentOffset);
-                position = new Vector3D(ConvertPointToLocalCoordinates(new Vector3D(workingRigidbody.position)) + currentOffset);
+                workingRigidbody.MovePosition(thisTransform.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.position) + currentOffset));
+                //position = new Vector3D(ConvertPointToLocalCoordinates(new Vector3D(workingRigidbody.position)) + currentOffset);
 
 
-                //velocity = workingRigidbody.velocity + currentVelocityOffset;
-                velocity = ConvertVectorToLocalCoordinates(currentVelocityOffset) + currentVelocityOffset;
+                velocity = thisTransform.parent.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.velocity) + currentVelocityOffset);
+                workingRigidbody.velocity = velocity;
+                //velocity = ConvertVectorToLocalCoordinates(currentVelocityOffset) + currentVelocityOffset;
 
 
                 //workingRigidbody.velocity = velocity;
                 //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
 
-                rotation = ConvertRotationToLocalRotation(workingRigidbody.rotation) * currentRotationOffset;
+                workingRigidbody.MoveRotation((Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation) * currentRotationOffset);
 
-                Vector3 v;
-                if(thisTransform.parent != null) {
-                    v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
-                }else {
-                    v = workingRigidbody.angularVelocity;
-                }
-                
+
+
+                Vector3 v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
                 float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
-                //Construct the current angular velocity quaternion, and add the current offset, and then convert back to angleAxis
-                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset;
+                (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
+                workingRigidbody.angularVelocity = thisTransform.parent.TransformVector(tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad);
 
-
-
-
-                workingRigidbody.MovePosition(ConvertPointToWorldCoordinates(position));
-                workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
-
+                /*
 
                 if(thisTransform.parent != null) {
                     workingRigidbody.velocity = thisTransform.parent.TransformVector(velocity);
@@ -407,24 +399,16 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     rotationalVelocity.ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
                     workingRigidbody.angularVelocity = tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad;
                 }
-                
-                
-                position = GetPosition(); //maybe, maybe not
+                */
 
-                if(thisTransform.parent != null) {
-                    rotation = ConvertRotationToLocalRotation(workingRigidbody.rotation);
-                    v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
-                    angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
-                    rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
-                }else {
-                    rotation = workingRigidbody.rotation;
-                    v = workingRigidbody.angularVelocity;
-                    angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
-                    rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
-                }
-                
-                
-                
+                position = GetPosition(); //maybe, maybe not
+                rotation = Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation;
+                v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
+                angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
+                rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
+
+
+
             }
             else { //physicsless motion
                 
