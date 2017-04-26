@@ -302,7 +302,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             thisRigidbody.isKinematic = isKinematic;
 
             float timeFraction = (Time.fixedTime - lastUpdateTime) / standardLerpDuration;
-            float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (lastInterval / intervalFraction);
+            float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (0.5f / intervalFraction);
 
             if (hasRigidbody && (isKinematic == false)) {
                 /*
@@ -349,7 +349,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
-                
+
 
                 /*
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
@@ -358,9 +358,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     thisRigidbody.MoveRotation(Quaternion.Slerp(thisRigidbody.rotation, updatedRotation, Time.fixedDeltaTime * unityInterpolateRotation));
                     updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
                 */
-                velocity = Vector3.Lerp(beforeUpdateVelocity, updatedVelocity, TweenFunction(interleavedFraction));
-                    
-                updatedPosition += updatedVelocity * Time.fixedDeltaTime * 1;
+                velocity = updatedVelocity;
+                updatedPosition += velocity * Time.fixedDeltaTime * 1;
                 //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * nudgeRatio;
                 position += (updatedPosition - position) * nudgeRatio;
                 //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
@@ -427,10 +426,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         if (hasZonedTransform) {
             //thisZonedTransform.parentGrid has the old grid
             //t.gridID has the new grid
-            position = thisZonedTransform.manager.GetRelativePosition(thisZonedTransform.parentGrid, thisZonedTransform.manager.GetGridByID(t.gridID), position);
-            if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
-                thisZonedTransform.SetGrid(t.gridID, true);
+            if(thisZonedTransform.parentGrid != null && thisZonedTransform.parentGrid.GetGridID() != t.gridID) {
+                position = thisZonedTransform.manager.GetRelativePosition(thisZonedTransform.parentGrid, thisZonedTransform.manager.GetGridByID(t.gridID), position);
+                if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
+                    thisZonedTransform.SetGrid(t.gridID, true);
+                }
             }
+            
 
         }
 
