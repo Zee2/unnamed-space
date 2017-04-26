@@ -424,7 +424,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 
     void ProcessUpdate(TransformUpdate t) {
-        thisRigidbody.WakeUp();
+        if(hasRigidbody)
+            thisRigidbody.WakeUp();
         lastInterval = Mathf.Lerp(lastInterval, Time.time - lastUpdateTime, 0.5f);
         lastUpdateTime = Time.time;
 
@@ -445,8 +446,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         isKinematic = t.isKinematic;
         beforeUpdatePosition = GetPosition(); //hmm
-        beforeUpdateVelocity = thisRigidbody.velocity;
-        beforeUpdateRotation = thisRigidbody.rotation;
+        if (hasRigidbody) {
+            beforeUpdateVelocity = thisRigidbody.velocity;
+            beforeUpdateRotation = thisRigidbody.rotation;
+        }else {
+            beforeUpdateRotation = thisTransform.localRotation;
+        }
+        
         beforeUpdateRotationalVelocity = rotationalVelocity;
 
         updatedPosition = t.position; //These are large world coordinates!!
