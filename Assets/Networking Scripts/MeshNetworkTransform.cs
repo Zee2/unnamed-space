@@ -299,12 +299,17 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             }
         }
         else { //if we are the shadow (2edgy4me)
-            thisRigidbody.isKinematic = isKinematic;
+            
 
             float timeFraction = (Time.fixedTime - lastUpdateTime) / standardLerpDuration;
             float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (0.5f / intervalFraction);
 
+            if (hasRigidbody) {
+                thisRigidbody.isKinematic = isKinematic;
+            }
+
             if (hasRigidbody && (isKinematic == false)) {
+                
                 /*
                 if (useUnitySyncing) {
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
@@ -314,7 +319,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     return;
                 }
                 */
-                
+
 
 
                 //physcorrect = "offset applications per second"
@@ -349,7 +354,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
             }
             else { //physicsless motion
-
+                
 
                 /*
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
