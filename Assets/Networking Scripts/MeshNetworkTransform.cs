@@ -171,6 +171,30 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             return localPosition;
         }
     }
+    Vector3 ConvertPointToLocalCoordinates(Vector3D precisePosition) { //takes in large world coordinates
+        Vector3 localPosition = CompressPosition(precisePosition);
+        if (hasZonedTransform) {
+            if (thisZonedTransform.parentGrid != null) {
+                return thisZonedTransform.parentGrid.transform.InverseTransformPoint(localPosition);
+            } else {
+                return localPosition;
+            }
+        } else {
+            return localPosition;
+        }
+    }
+    Vector3 ConvertVectorToLocalCoordinates(Vector3 worldVector) { //takes in large world coordinates
+        
+        if (hasZonedTransform) {
+            if (thisZonedTransform.parentGrid != null) {
+                return thisZonedTransform.parentGrid.transform.InverseTransformVector(worldVector);
+            } else {
+                return worldVector;
+            }
+        } else {
+            return worldVector;
+        }
+    }
     Quaternion ConvertRotationToWorldRotation(Quaternion localRotation) { //takes in local rotation
         
         if (hasZonedTransform) {
@@ -343,11 +367,11 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 //workingRigidbody.MovePosition(workingRigidbody.position + currentOffset);
-                position += currentOffset;
+                position = new Vector3D(ConvertPointToLocalCoordinates(new Vector3D(workingRigidbody.position)) + currentOffset);
 
 
                 //velocity = workingRigidbody.velocity + currentVelocityOffset;
-                velocity += currentVelocityOffset;
+                velocity = ConvertVectorToLocalCoordinates(currentVelocityOffset) + currentVelocityOffset;
 
 
                 //workingRigidbody.velocity = velocity;
