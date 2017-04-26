@@ -350,6 +350,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
                 */
 
+                //This isn't working very well. Restore from backup.
 
 
                 //physcorrect = "offset applications per second"
