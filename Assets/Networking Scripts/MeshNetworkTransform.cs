@@ -367,12 +367,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 }
 
 
+                //Something's wrong with the rotations here. Rotational velocity too, perhaps.
+
                 workingRigidbody.MovePosition(thisTransform.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.position) + currentOffset));
                 //position = new Vector3D(ConvertPointToLocalCoordinates(new Vector3D(workingRigidbody.position)) + currentOffset);
 
 
                 velocity = thisTransform.parent.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.velocity) + currentVelocityOffset);
-                workingRigidbody.velocity = velocity;
+                //workingRigidbody.velocity = velocity;
                 //velocity = ConvertVectorToLocalCoordinates(currentVelocityOffset) + currentVelocityOffset;
 
 
@@ -402,6 +404,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 */
 
                 position = GetPosition(); //maybe, maybe not
+                
                 rotation = Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation;
                 v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
                 angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
