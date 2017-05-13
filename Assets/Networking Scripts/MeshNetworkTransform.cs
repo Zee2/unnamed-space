@@ -368,8 +368,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 //Something's wrong with the rotations here. Rotational velocity too, perhaps.
-
-                workingRigidbody.MovePosition(thisTransform.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.position) + currentOffset));
+                //workingRigidbody.MovePosition(workingRigidbody.position + currentOffset);
+                workingRigidbody.MovePosition(thisTransform.parent.TransformVector(thisTransform.parent.InverseTransformVector(workingRigidbody.position) + currentOffset));
                 //position = new Vector3D(ConvertPointToLocalCoordinates(new Vector3D(workingRigidbody.position)) + currentOffset);
 
 
