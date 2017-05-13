@@ -42,6 +42,10 @@ public class ZonedTransform : MonoBehaviour{
         manager.TriggerRootScan();
 	}
 
+    public Transform GetTransform() {
+        return thisTransform;
+    }
+
     public bool GetAuthorized() {
         if(thisMNI == null || hasIdentityContainer == false) {
             Debug.Log("ThisMNI: " + thisMNI + ", hasIdentityContainer: " + hasIdentityContainer);

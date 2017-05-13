@@ -161,7 +161,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         Vector3 localPosition = CompressPosition(precisePosition);
         if (hasZonedTransform) {
             if(thisZonedTransform.parentGrid != null) {
-                return thisZonedTransform.parentGrid.transform.TransformPoint(localPosition);
+                return thisZonedTransform.parentGrid.GetGridZonedTransform().GetTransform().TransformPoint(localPosition);
             }
             else {
                 return localPosition;
@@ -434,8 +434,10 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
                 if (hasRigidbody) {
-
-                    workingRigidbody.MovePosition(ConvertPointToWorldCoordinates(position));
+                    if(Input.GetKey(KeyCode.Space))
+                        thisTransform.localPosition = CompressPosition(position);
+                    else
+                        workingRigidbody.MovePosition(thisTransform.parent.TransformPoint(CompressPosition(position)));
                     workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
                 } else {
                     thisTransform.localPosition = CompressPosition(position);
@@ -506,7 +508,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
         isKinematic = t.isKinematic;
         beforeUpdatePosition = GetPosition(); //hmm
-        beforeUpdateRotation = rotation;
+        beforeUpdateRotation = thisTransform.localRotation;
         beforeUpdateVelocity = velocity;
         beforeUpdateRotationalVelocity = rotationalVelocity;
 

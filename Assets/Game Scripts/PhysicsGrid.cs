@@ -17,7 +17,7 @@ public class PhysicsGrid : MonoBehaviour {
     public Vector3 gravity;
     public float gravityStrength;
     public bool radialGravity;
-    Transform gridTransform;
+    public Transform gridTransform;
     ZonedTransform gridZonedTransform;
     public Vector3D currentWorldOrigin = new Vector3D();
     public bool originTest;
