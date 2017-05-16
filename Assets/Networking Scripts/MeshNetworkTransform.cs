@@ -105,21 +105,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 	
     void OnEnable() {
-
-        lastUpdateTime = 0;
-        lastBroadcastTime = 0;
-        lastInterval = 0;
-
-        beforeUpdatePosition = new Vector3D(Vector3.zero);
-        updatedPosition = new Vector3D(Vector3.zero);
-        beforeUpdateVelocity = Vector3.zero;
-        updatedVelocity = Vector3.zero;
-        currentOffset = Vector3.zero;
-        velocityBuffer = new Queue<Vector3>();
-        rotationalVelocityBuffer = new Queue<Quaternion>();
-        rotationalVelocityBuffer = new Queue<Quaternion>(rotationSampleSize);
-
-
+        
         for (int i = 0; i < rotationSampleSize; i++) {
             rotationalVelocityBuffer.Enqueue(Quaternion.identity);
         }
@@ -240,12 +226,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     // Update is called once per frame
     void FixedUpdate () {
-
-        if (tempDisable) {
-            this.enabled = false;
-            this.enabled = true;
-            tempDisable = false;
-        }
+        
+        
 
         if(GetIdentity() == null) {
             //return;
@@ -455,10 +437,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
 
                 if (hasRigidbody) {
-                    if(Input.GetKey(KeyCode.Space))
-                        thisTransform.localPosition = CompressPosition(position);
-                    else
-                        workingRigidbody.MovePosition(thisZonedTransform.parentGrid.gridTransform.TransformPoint(CompressPosition(position)));
+                    workingRigidbody.MovePosition(thisZonedTransform.parentGrid.gridTransform.TransformPoint(CompressPosition(position)));
                     workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
                 } else {
                     thisTransform.localPosition = CompressPosition(position);

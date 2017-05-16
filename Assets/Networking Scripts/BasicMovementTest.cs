@@ -23,6 +23,10 @@ public class BasicMovementTest : MonoBehaviour {
     }
     // Update is called once per frame
     void FixedUpdate() {
+        if (Input.GetKeyDown(KeyCode.K)) {
+            r.isKinematic = !r.isKinematic;
+        }
+
         if(z.parentGrid != null)
             r.MovePosition(z.parentGrid.transform.TransformPoint(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical")))));
         else
