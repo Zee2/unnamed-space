@@ -13,7 +13,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         acceleration, rotation, rotational velocity, and rotational acceleration.
 
     */
-
+    public bool rotationDebug;
+    public bool tempDisable;
     public byte subcomponentID;
 
     //not networked
@@ -104,8 +105,21 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
     }
 	
     void OnEnable() {
-        
+
+        lastUpdateTime = 0;
+        lastBroadcastTime = 0;
+        lastInterval = 0;
+
+        beforeUpdatePosition = new Vector3D(Vector3.zero);
+        updatedPosition = new Vector3D(Vector3.zero);
+        beforeUpdateVelocity = Vector3.zero;
+        updatedVelocity = Vector3.zero;
+        currentOffset = Vector3.zero;
+        velocityBuffer = new Queue<Vector3>();
+        rotationalVelocityBuffer = new Queue<Quaternion>();
         rotationalVelocityBuffer = new Queue<Quaternion>(rotationSampleSize);
+
+
         for (int i = 0; i < rotationSampleSize; i++) {
             rotationalVelocityBuffer.Enqueue(Quaternion.identity);
         }
@@ -226,6 +240,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
     // Update is called once per frame
     void FixedUpdate () {
+
+        if (tempDisable) {
+            this.enabled = false;
+            this.enabled = true;
+            tempDisable = false;
+        }
+
         if(GetIdentity() == null) {
             //return;
             //Probably not set up yet.
@@ -381,7 +402,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 //workingRigidbody.velocity = velocity;
                 //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
 
-                workingRigidbody.MoveRotation((Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation) * currentRotationOffset);
+                workingRigidbody.MoveRotation(((Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation) * currentRotationOffset) * thisTransform.parent.rotation);
 
 
 
@@ -441,7 +462,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
                 } else {
                     thisTransform.localPosition = CompressPosition(position);
-                    thisTransform.localRotation = rotation;
+                    if(rotationDebug == false)
+                        thisTransform.localRotation = rotation;
                 }
             }
 
@@ -497,6 +519,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
             if(thisZonedTransform.parentGrid != null && thisZonedTransform.parentGrid.GetGridID() != t.gridID) {
                 position = thisZonedTransform.manager.GetRelativePosition(thisZonedTransform.parentGrid, thisZonedTransform.manager.GetGridByID(t.gridID), position);
                 if (t.gridID != (ushort)ReservedObjectIDs.Unspecified) {
+                    this.enabled = false;
+                    this.enabled = true;
                     thisZonedTransform.SetGrid(t.gridID, true);
                 }
             }
