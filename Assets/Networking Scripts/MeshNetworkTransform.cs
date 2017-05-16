@@ -437,7 +437,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     if(Input.GetKey(KeyCode.Space))
                         thisTransform.localPosition = CompressPosition(position);
                     else
-                        workingRigidbody.MovePosition(thisTransform.parent.TransformPoint(CompressPosition(position)));
+                        workingRigidbody.MovePosition(thisZonedTransform.parentGrid.gridTransform.TransformPoint(CompressPosition(position)));
                     workingRigidbody.MoveRotation(ConvertRotationToWorldRotation(rotation));
                 } else {
                     thisTransform.localPosition = CompressPosition(position);
