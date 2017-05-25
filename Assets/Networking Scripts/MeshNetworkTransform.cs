@@ -359,7 +359,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 //physcorrect = "offset applications per second"
                 currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.fixedDeltaTime;
                 currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.fixedDeltaTime;
-                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.fixedDeltaTime);
+                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.fixedDeltaTime); //this is local
                 currentRotationalVelocityOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotationalVelocity) * updatedRotationalVelocity, physcorrect * Time.deltaTime);
                 //thus, 1/physcorrect = "amount of time it takes for a full offset"
                 if (Time.fixedTime - lastUpdateTime > 1/physcorrect) {
@@ -384,14 +384,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 //workingRigidbody.velocity = velocity;
                 //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
 
-                workingRigidbody.MoveRotation(((workingRigidbody.rotation * Quaternion.Inverse(thisTransform.parent.rotation)) * currentRotationOffset) * thisTransform.parent.rotation);
-
+                workingRigidbody.MoveRotation(thisTransform.parent.rotation * ((Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation) * currentRotationOffset));
+                //workingRigidbody.MoveRotation(thisTransform.parent.rotation * updatedRotation);
 
 
                 Vector3 v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
                 float angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                 (Quaternion.AngleAxis(angle, v.normalized) * currentRotationalVelocityOffset).ToAngleAxis(out tempAngleVariable, out tempAxisVariable);
-                workingRigidbody.angularVelocity = thisTransform.parent.TransformVector(tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad);
+                //workingRigidbody.angularVelocity = thisTransform.parent.TransformVector(tempAxisVariable * tempAngleVariable * Mathf.Deg2Rad);
 
                 /*
 
@@ -408,7 +408,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
                 position = GetPosition(); //maybe, maybe not
                 
-                rotation = Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation;
+                rotation =  workingRigidbody.rotation * Quaternion.Inverse(thisTransform.parent.rotation);
                 v = thisTransform.parent.InverseTransformVector(workingRigidbody.angularVelocity);
                 angle = (v.x / v.normalized.x) * Mathf.Rad2Deg;
                 rotationalVelocity = Quaternion.AngleAxis(angle, v.normalized);
