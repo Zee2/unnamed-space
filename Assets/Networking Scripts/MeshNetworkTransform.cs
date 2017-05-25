@@ -384,7 +384,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                 //workingRigidbody.velocity = velocity;
                 //workingRigidbody.MoveRotation(workingRigidbody.rotation * currentRotationOffset);
 
-                workingRigidbody.MoveRotation(((Quaternion.Inverse(thisTransform.parent.rotation) * workingRigidbody.rotation) * currentRotationOffset) * thisTransform.parent.rotation);
+                workingRigidbody.MoveRotation(((workingRigidbody.rotation * Quaternion.Inverse(thisTransform.parent.rotation)) * currentRotationOffset) * thisTransform.parent.rotation);
 
 
 

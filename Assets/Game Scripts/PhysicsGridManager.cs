@@ -147,7 +147,6 @@ public class PhysicsGridManager : MonoBehaviour {
             //going up one level now
             position = (sourceParentageInclusive[i].transform.localRotation * position) + sourceParentageInclusive[i].transform.localPosition;
         }
-        Debug.LogError("Fallback");
         return Vector3.zero;
 
 

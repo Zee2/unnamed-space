@@ -23,6 +23,19 @@ ModelImporter:
     100030: Cube_013
     100032: Cube_014
     100034: Cube_015
+    100036: Armature
+    100038: Armature_001
+    100040: Bone
+    100042: Bone_0
+    100044: Bone_001
+    100046: Bone_002
+    100048: Bone_003
+    100050: Bone_2
+    100052: Cube_000
+    100054: Cube_016
+    100056: Cube_017
+    100058: Cube_018
+    100060: Cube_019
     400000: Cube
     400002: Cube_001
     400004: //RootNode
@@ -41,6 +54,19 @@ ModelImporter:
     400030: Cube_013
     400032: Cube_014
     400034: Cube_015
+    400036: Armature
+    400038: Armature_001
+    400040: Bone
+    400042: Bone_0
+    400044: Bone_001
+    400046: Bone_002
+    400048: Bone_003
+    400050: Bone_2
+    400052: Cube_000
+    400054: Cube_016
+    400056: Cube_017
+    400058: Cube_018
+    400060: Cube_019
     2300000: Cube
     2300002: Cube_001
     2300004: Plane
@@ -92,8 +118,18 @@ ModelImporter:
     4300028: Cube_005
     4300030: Cube_004
     4300032: Cube_003
+    4300034: Cube_018
+    4300036: Cube_019
+    4300038: Cube_017
+    4300040: Cube_016
+    4300042: Cube_000
     7400000: Default Take
     9500000: //RootNode
+    13700000: Cube_000
+    13700002: Cube_016
+    13700004: Cube_017
+    13700006: Cube_018
+    13700008: Cube_019
   materials:
     importMaterials: 1
     materialName: 0
