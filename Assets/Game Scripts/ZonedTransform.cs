@@ -62,10 +62,10 @@ public class ZonedTransform : MonoBehaviour{
     }
 
     public void SetGrid(PhysicsGrid g, bool remoteOverride) {
-        if (GetAuthorized() == false) {
-            if(remoteOverride == false) {
-                return; //not authorized, and it is not a remote update
-            }
+        if (remoteOverride == false && GetAuthorized() == false) {
+            
+            return; //not authorized, and it is not a remote update
+            
         }
 
         if(parentGrid != null && parentGrid.GetGridID() != (ushort)Utilities.ReservedObjectIDs.Unspecified && parentGrid.GetGridID() == g.GetGridID()) {

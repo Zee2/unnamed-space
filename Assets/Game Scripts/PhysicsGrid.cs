@@ -21,6 +21,9 @@ public class PhysicsGrid : MonoBehaviour {
     ZonedTransform gridZonedTransform;
     public Vector3D currentWorldOrigin = new Vector3D();
     public bool originTest;
+
+    Vector3 proxyOffset;
+    
     
     PhysicsGridManager manager;
     Dictionary<GameObject, Rigidbody> objectsInGrid = new Dictionary<GameObject, Rigidbody>();
@@ -68,7 +71,9 @@ public class PhysicsGrid : MonoBehaviour {
             GridID = (ushort)ReservedObjectIDs.RootGrid;
         }
         
-        
+        if(proxyZT != null) {
+            proxyOffset = gridTransform.position - proxy.transform.position;
+        }
 
         if (hasGridID == false) {
             Debug.LogWarning("Physics grid " + name + " has no grid ID. Will not be able to be serialized across network.");
@@ -168,18 +173,18 @@ public class PhysicsGrid : MonoBehaviour {
                 thisMNI = c.GetIdentity();
             }
         }
+        if (proxy != null && proxyZT != null) { //if we have a proxy, and that proxy has a zone transform
+            gridZonedTransform.SetGrid(proxyZT.parentGrid, true);
+            gridTransform.localPosition = proxyOffset + proxyZT.transform.localPosition;
+            //gridTransform.localRotation = proxyZT.transform.localRotation;
+        } else if (proxy != null) {
+            gridTransform.position = proxyOffset + proxy.transform.position;
+            //gridTransform.rotation = proxy.transform.rotation;
+        }
     }
 
     public void LateUpdate() {
-        if (proxy != null && proxyZT != null) { //if we have a proxy, and that proxy has a zone transform
-            gridZonedTransform.parentGrid = proxyZT.parentGrid;
-            gridTransform.localPosition = proxyZT.transform.localPosition;
-            gridTransform.localRotation = proxyZT.transform.localRotation;
-        }
-        else if (proxy != null) {
-            gridTransform.position = proxy.transform.position;
-            gridTransform.rotation = proxy.transform.rotation;
-        }
+        
 
     }
 

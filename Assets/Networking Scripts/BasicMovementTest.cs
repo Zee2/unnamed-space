@@ -22,15 +22,15 @@ public class BasicMovementTest : MonoBehaviour {
         z = gameObject.GetComponent<ZonedTransform>();
     }
     // Update is called once per frame
-    void FixedUpdate() {
+    void Update() {
         if (Input.GetKeyDown(KeyCode.K)) {
             r.isKinematic = !r.isKinematic;
         }
 
         if(z.parentGrid != null)
-            r.MovePosition(z.parentGrid.transform.TransformPoint(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical")))));
+            r.MovePosition(z.parentGrid.transform.TransformPoint(transform.localPosition + speed * Time.deltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical")))));
         else
-            r.MovePosition(transform.localPosition + speed * Time.fixedDeltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))));
+            r.MovePosition(transform.localPosition + speed * Time.deltaTime * (new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"))));
         //Vector3 forceVector = new Vector3(Input.GetAxis("Horizontal"), Input.GetAxis("Vertical Strafe"), Input.GetAxis("Vertical"));
 
         //if (transform.parent != null)
