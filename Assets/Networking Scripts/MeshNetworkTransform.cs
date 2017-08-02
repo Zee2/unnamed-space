@@ -225,7 +225,7 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
     // Update is called once per frame
-    void FixedUpdate () {
+    void Update () {
         
         
 
@@ -296,13 +296,13 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     if (thisTransform.parent != null) { //if we have a parent, transform the world rigidbody velocity to localspace
                         velocity = thisTransform.parent.InverseTransformDirection(workingRigidbody.velocity);
                     } else {
-                        velocity = workingRigidbody.velocity;
+                        velocity = workingRigidbody.velocity; //we are sending unreliable kinematic velocity data.... maybe a bad idea!
                     }
                     lastPosition = position;
                     lastVelocity = velocity;
 
                     rotationalVelocityBuffer.Dequeue();
-                    rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation) * rotation, 1 / Time.fixedDeltaTime));
+                    rotationalVelocityBuffer.Enqueue(Quaternion.Slerp(lastRotation, Quaternion.Inverse(lastRotation) * rotation, 1 / Time.deltaTime));
                     rotationalVelocityBuffer.CopyTo(rotationalVelocityCopyBuffer, 0);
                     rotationalVelocityAverage = Quaternion.identity;
                     for (byte i = 0; i < rotationalVelocityCopyBuffer.Length; i++) {
@@ -325,8 +325,8 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
             
-            if(Time.fixedTime - lastBroadcastTime > (float)(1 / broadcastRate)) {
-                lastBroadcastTime = Time.fixedTime;
+            if(Time.time - lastBroadcastTime > (float)(1 / broadcastRate)) {
+                lastBroadcastTime = Time.time;
                 BroadcastUpdate();
                 
             }
@@ -334,15 +334,20 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
         else { //if we are the shadow (2edgy4me)
             
 
-            float timeFraction = (Time.fixedTime - lastUpdateTime) / standardLerpDuration;
-            float interleavedFraction = (Time.fixedTime - lastUpdateTime) / (0.5f / intervalFraction);
+            float timeFraction = (Time.time - lastUpdateTime) / standardLerpDuration;
+            float interleavedFraction = (Time.time - lastUpdateTime) / (0.5f / intervalFraction);
 
             if (hasRigidbody) {
                 workingRigidbody.isKinematic = isKinematic;
             }
 
+
+
+            ////////////////////////////////////////////////////////////
+            //    NON KINEMATIC RIGIDBODY
+            ////////////////////////////////////////////////////////////
             if (hasRigidbody && (isKinematic == false)) {
-                
+
                 /*
                 if (useUnitySyncing) {
                     velocity = (updatedPosition - thisRigidbody.position) * (unityInterpolateMovement / lastInterval);
@@ -357,12 +362,12 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
 
 
                 //physcorrect = "offset applications per second"
-                currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.fixedDeltaTime;
-                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.fixedDeltaTime;
-                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.fixedDeltaTime); //this is local
+                currentOffset = (updatedPosition - beforeUpdatePosition) * (physcorrect) * Time.deltaTime;
+                currentVelocityOffset = (updatedVelocity - beforeUpdateVelocity) * (physcorrect) * Time.deltaTime;
+                currentRotationOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotation) * updatedRotation, physcorrect * Time.deltaTime); //this is local
                 currentRotationalVelocityOffset = Quaternion.SlerpUnclamped(Quaternion.identity, Quaternion.Inverse(beforeUpdateRotationalVelocity) * updatedRotationalVelocity, physcorrect * Time.deltaTime);
                 //thus, 1/physcorrect = "amount of time it takes for a full offset"
-                if (Time.fixedTime - lastUpdateTime > 1/physcorrect) {
+                if (Time.time - lastUpdateTime > 1/physcorrect) {
                     currentOffset = Vector3.zero;
                     currentVelocityOffset = Vector3.zero;
                     currentRotationOffset = Quaternion.identity;
@@ -427,14 +432,14 @@ public class MeshNetworkTransform : MonoBehaviour, IReceivesPacket<MeshPacket>, 
                     updatedPosition += (updatedVelocity * Time.fixedDeltaTime * nudgeRatio);
                 */
                 velocity = updatedVelocity;
-                updatedPosition += velocity * Time.fixedDeltaTime * 1;
+                updatedPosition += velocity * Time.deltaTime * 1;
                 //position += (velocity * Time.fixedDeltaTime) + (updatedPosition - position) * nudgeRatio;
                 position += (updatedPosition - position) * nudgeRatio;
                 //position = Vector3.LerpUnclamped(beforeUpdatePosition, updatedPosition, TweenFunction(interleavedFraction));
                     
                 rotationalVelocity = Quaternion.Slerp(beforeUpdateRotationalVelocity, updatedRotationalVelocity, timeFraction);
                 currentRotationOffset = Quaternion.Slerp(beforeUpdateRotation, updatedRotation, timeFraction);
-                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.fixedTime - lastUpdateTime);
+                rotation = currentRotationOffset * Quaternion.SlerpUnclamped(Quaternion.identity, rotationalVelocity, Time.time - lastUpdateTime);
 
                 if (hasRigidbody) {
                     workingRigidbody.MovePosition(thisZonedTransform.parentGrid.gridTransform.TransformPoint(CompressPosition(position)));
