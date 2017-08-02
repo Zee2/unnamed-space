@@ -915,7 +915,7 @@ namespace Utilities {
             MeshPacket received = new MeshPacket(transmitData);
             
             DatabaseUpdate receivedDB = DatabaseUpdate.ParseContentAsDatabaseUpdate(received.GetContents());
-            Debug.logger.logEnabled = true;
+            Debug.unityLogger.logEnabled = true;
             Debug.Log("Testing: " + stopwatch.Elapsed.TotalMilliseconds);
         }
 

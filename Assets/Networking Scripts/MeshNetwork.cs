@@ -48,10 +48,10 @@ public class MeshNetwork : MonoBehaviour {
     ulong localPlayerID = (ulong)ReservedPlayerIDs.Unspecified;
 
     void Start() {
-        Debug.logger.logEnabled = true;
+        Debug.unityLogger.logEnabled = true;
         DontDestroyOnLoad(gameObject);
         
-        Debug.logger.logEnabled = true;
+        Debug.unityLogger.logEnabled = true;
         
         foreach (var method in typeof(DatabaseUpdate).GetMethods()) {
             //Debug.Log("Method: " + method.Name);

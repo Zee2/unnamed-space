@@ -1,10 +1,13 @@
 // This file is provided under The MIT License as part of Steamworks.NET.
-// Copyright (c) 2013-2015 Riley Labrecque
+// Copyright (c) 2013-2017 Riley Labrecque
 // Please see the included LICENSE.txt for additional information.
 
 // Changes to this file will be reverted when you update Steamworks.NET
 
+#if !DISABLESTEAMWORKS
+
 namespace Steamworks {
+	[System.Serializable]
 	public struct CGameID : System.IEquatable<CGameID>, System.IComparable<CGameID> {
 		public ulong m_GameID;
 
@@ -58,7 +61,7 @@ namespace Steamworks {
 		public uint ModID() {
 			return (uint)((m_GameID >> 32) & 0xFFFFFFFFul);
 		}
-		
+
 		public bool IsValid() {
 			// Each type has it's own invalid fixed point:
 			switch (Type()) {
@@ -139,3 +142,5 @@ namespace Steamworks {
 		#endregion
 	}
 }
+
+#endif // !DISABLESTEAMWORKS

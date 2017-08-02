@@ -1,10 +1,14 @@
 // This file is provided under The MIT License as part of Steamworks.NET.
-// Copyright (c) 2013-2015 Riley Labrecque
+// Copyright (c) 2013-2017 Riley Labrecque
 // Please see the included LICENSE.txt for additional information.
 
 // Changes to this file will be reverted when you update Steamworks.NET
 
+#if !DISABLESTEAMWORKS
+
 namespace Steamworks {
+	[System.Serializable]
+	[System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential, Pack = 4)]
 	public struct CSteamID : System.IEquatable<CSteamID>, System.IComparable<CSteamID> {
 		public static readonly CSteamID Nil = new CSteamID();
 		public static readonly CSteamID OutofDateGS = new CSteamID(new AccountID_t(0), 0, EUniverse.k_EUniverseInvalid, EAccountType.k_EAccountTypeInvalid);
@@ -263,3 +267,5 @@ namespace Steamworks {
 		#endregion
 	}
 }
+
+#endif // !DISABLESTEAMWORKS

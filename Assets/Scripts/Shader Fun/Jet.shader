@@ -1,4 +1,6 @@
-﻿
+﻿// Upgrade NOTE: replaced '_Object2World' with 'unity_ObjectToWorld'
+
+
 Shader "Custom/Jet" {
 	Properties{
 		_Color("Tint Color", Color) = (1,1,1,1)
@@ -51,7 +53,7 @@ Shader "Custom/Jet" {
 					UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
 					o.vertex = UnityObjectToClipPos(v.vertex);
 					o.uv = TRANSFORM_TEX(v.uv, _MainTex);
-					o.seed = mul(_Object2World, v.vertex);
+					o.seed = mul(unity_ObjectToWorld, v.vertex);
 					return o;
 				}
 

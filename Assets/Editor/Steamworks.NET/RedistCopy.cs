@@ -1,5 +1,11 @@
-// Uncomment this out to disable copying
-//#define DISABLEREDISTCOPY
+// This file is provided under The MIT License as part of Steamworks.NET.
+// Copyright (c) 2013-2017 Riley Labrecque
+// Please see the included LICENSE.txt for additional information.
+
+// Add 'DISABLEREDISTCOPY' to your custom platform defines to disable automatic copying!
+#if UNITY_5_3_OR_NEWER
+	#define DISABLEREDISTCOPY
+#endif
 
 using UnityEngine;
 using UnityEditor;
@@ -24,7 +30,7 @@ public class RedistCopy {
 		else if (target == BuildTarget.StandaloneWindows) {
 			CopyFile("steam_api.dll", "steam_api.dll", "Assets/Plugins/x86", pathToBuiltProject);
 		}
-				
+
 		string controllerCfg = Path.Combine(Application.dataPath, "controller.vdf");
 		if (File.Exists(controllerCfg)) {
 			string dir = "_Data";
